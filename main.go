@@ -83,12 +83,14 @@ func (self *ExitError) ExitStatus() int {
 	return self.status
 }
 
+var HandlerDirpath = "handler"
+
 func Invoke(event string, body []byte) ([]byte, *ExitError) {
-	return invoke("handler", event, body)
+	return invoke(HandlerDirpath, event, body)
 }
 
-func invoke(dirpath, event string, body []byte) ([]byte, *ExitError) {
-	path, err := exec.LookPath(fmt.Sprintf("%s/%s", dirpath, event))
+func invoke(dirpath, filename string, body []byte) ([]byte, *ExitError) {
+	path, err := exec.LookPath(fmt.Sprintf("%s/%s", dirpath, filename))
 	if err != nil {
 		if _, ok := err.(*exec.Error); ok {
 			return nil, &ExitError{err, -1}
@@ -109,4 +111,13 @@ func invoke(dirpath, event string, body []byte) ([]byte, *ExitError) {
 	}
 
 	return out, nil
+}
+
+func Handlers(event string) []string {
+	files, _ := ioutil.ReadDir(fmt.Sprintf("%s/%s.d", HandlerDirpath, event))
+	paths := make([]string, len(files))
+	for i, e := range files {
+		paths[i] = e.Name()
+	}
+	return paths
 }
