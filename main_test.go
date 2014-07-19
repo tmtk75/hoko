@@ -52,11 +52,40 @@ func Test_Handlers(t *testing.T) {
 	if len(hs) != 2 {
 		t.Errorf("2, but %v", len(hs))
 	}
+	if hs[0] != "exit-1" {
+		t.Errorf("exit-1, but %v", hs[0])
+	}
+	if hs[1] != "permission_denied" {
+		t.Errorf("permission_denied, but %v", hs[1])
+	}
 }
 
 func Test_Handlers_no_directory(t *testing.T) {
 	hs := Handlers("missing")
 	if len(hs) != 0 {
 		t.Errorf("0, but %v", len(hs))
+	}
+}
+
+func Test_Invoke(t *testing.T) {
+	rs := Invoke("handler", "push", []byte(""))
+	if len(rs) != 3 {
+		t.Errorf("3, but %v", len(rs))
+	}
+	if rs[0].Err != nil {
+		t.Errorf("0, but %v", rs[0])
+	}
+	if rs[1].Err.ExitStatus() != 1 {
+		t.Errorf("1, but %v", rs[1])
+	}
+	if rs[2].Err.ExitStatus() != -1 {
+		t.Errorf("-1, but %v", rs[2])
+	}
+	fail, partial := rs.Failed()
+	if !fail {
+		t.Errorf("fail: true, but %v", fail)
+	}
+	if !partial {
+		t.Errorf("partial: true, but %v", partial)
 	}
 }

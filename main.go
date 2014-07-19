@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"syscall"
 
@@ -54,11 +55,44 @@ func Run() {
 		logger.Printf("%s\n", body)
 
 		event := strings.ToLower(req.Header.Get("x-github-event"))
-		Invoke(event, b)
+		Invoke(HandlerDirpath, event, b)
 
 		r.JSON(204, nil)
 	})
 	m.Run()
+}
+
+func Invoke(dirpath, event string, body []byte) Results {
+	hs := Handlers(event)
+	rs := make([]*Result, len(hs)+1)
+	// primary
+	a, e := invoke(dirpath, event, body)
+	rs[0] = &Result{a, e}
+	// others
+	for i, h := range hs {
+		a, e := invoke(fmt.Sprintf("%s/%s.d", dirpath, event), h, body)
+		rs[i+1] = &Result{a, e}
+	}
+	return rs
+}
+
+type Results []*Result
+
+func (self *Results) Failed() (fail bool, partial bool) {
+	fail, partial = false, false
+	for _, e := range *self {
+		if e.Err != nil {
+			fail = true
+		} else {
+			partial = true
+		}
+	}
+	return
+}
+
+type Result struct {
+	Body []byte
+	Err  *ExitError
 }
 
 type WebhookBody struct {
@@ -84,10 +118,6 @@ func (self *ExitError) ExitStatus() int {
 }
 
 var HandlerDirpath = "handler"
-
-func Invoke(event string, body []byte) ([]byte, *ExitError) {
-	return invoke(HandlerDirpath, event, body)
-}
 
 func invoke(dirpath, filename string, body []byte) ([]byte, *ExitError) {
 	path, err := exec.LookPath(fmt.Sprintf("%s/%s", dirpath, filename))
@@ -115,9 +145,10 @@ func invoke(dirpath, filename string, body []byte) ([]byte, *ExitError) {
 
 func Handlers(event string) []string {
 	files, _ := ioutil.ReadDir(fmt.Sprintf("%s/%s.d", HandlerDirpath, event))
-	paths := make([]string, len(files))
+	paths := make(sort.StringSlice, len(files))
 	for i, e := range files {
 		paths[i] = e.Name()
 	}
+	paths.Sort()
 	return paths
 }
