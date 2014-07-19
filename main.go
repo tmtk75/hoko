@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
@@ -64,21 +65,42 @@ type WebhookBody struct {
 	Action string `json:"action"`
 }
 
-func Invoke(event string, body []byte) []byte {
-	path, err := exec.LookPath(fmt.Sprintf("event/%s", event))
+type ExitError struct {
+	Err        error
+	ExitStatus int
+}
+
+func (self *ExitError) Error() string {
+	return self.Err.Error()
+}
+
+func Invoke(event string, body []byte) ([]byte, *ExitError) {
+	return invoke("handler", event, body)
+}
+
+func invoke(dirpath, event string, body []byte) ([]byte, *ExitError) {
+	path, err := exec.LookPath(fmt.Sprintf("%s/%s", dirpath, event))
 	if err != nil {
-		panic(err)
+		if _, ok := err.(*exec.Error); ok {
+			return nil, &ExitError{err, -1}
+		} else {
+			panic(err)
+		}
 	}
 	cmd := exec.Command(path)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		panic(err)
+		return nil, &ExitError{err, -2}
 	}
 	stdin.Write(body)
 	stdin.Close()
 	out, err := cmd.Output()
 	if err != nil {
-		panic(err)
+		return nil, &ExitError{err, -3}
 	}
-	return out
+	if status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok {
+		log.Printf("Exit Status: %d", status.ExitStatus())
+	}
+
+	return out, nil
 }
