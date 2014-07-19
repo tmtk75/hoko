@@ -58,15 +58,33 @@ func Run() {
 
 		if b, p := rs.Failed(); b {
 			if p {
-				r.JSON(207, nil)
+				r.Data(207, []byte(rs.Response("plain/text")))
 			} else {
-				r.JSON(400, nil)
+				r.JSON(500, nil)
 			}
 		} else {
 			r.JSON(204, nil)
 		}
 	})
 	m.Run()
+}
+
+func (rs *Results) Response(mimetype string) string {
+	switch mimetype {
+	case "plain/text":
+		a := ""
+		for _, r := range *rs {
+			if r.Err != nil {
+				a += "500\t"
+			} else {
+				a += "200\t"
+			}
+			a += r.Path + "\n"
+		}
+		return a
+	}
+	log.Printf("Unsupported: %v", mimetype)
+	return ""
 }
 
 type Dirpath string
