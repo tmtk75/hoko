@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func (self *ExitError) ExitStatus() int {
 	return self.status
 }
 
-func Invoke(dirpath, filename string, body []byte) ([]byte, *ExitError) {
+func Exec(dirpath, filename string, body []byte) ([]byte, *ExitError) {
 	path, err := exec.LookPath(fmt.Sprintf("%s/%s", dirpath, filename))
 	if err != nil {
 		if _, ok := err.(*exec.Error); ok {

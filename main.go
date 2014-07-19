@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"./cmd"
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
@@ -91,7 +90,7 @@ func (self *Results) Failed() (fail bool, partial bool) {
 
 type Result struct {
 	Body []byte
-	Err  *cmd.ExitError
+	Err  *ExitError
 }
 
 type WebhookBody struct {
@@ -100,8 +99,8 @@ type WebhookBody struct {
 
 var HandlerDirpath = "handler"
 
-func invoke(dirpath, filename string, body []byte) ([]byte, *cmd.ExitError) {
-	return cmd.Invoke(dirpath, filename, body)
+func invoke(dirpath, filename string, body []byte) ([]byte, *ExitError) {
+	return Exec(dirpath, filename, body)
 }
 
 func Handlers(event string) []string {
