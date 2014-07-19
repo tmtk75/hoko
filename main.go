@@ -66,12 +66,21 @@ type WebhookBody struct {
 }
 
 type ExitError struct {
-	Err        error
-	ExitStatus int
+	Err    error
+	status int
 }
 
 func (self *ExitError) Error() string {
-	return self.Err.Error()
+	return fmt.Sprintf("%s:%v", self.Err.Error(), self.ExitStatus())
+}
+
+func (self *ExitError) ExitStatus() int {
+	if exiterr, ok := self.Err.(*exec.ExitError); ok {
+		if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+			return status.ExitStatus()
+		}
+	}
+	return self.status
 }
 
 func Invoke(event string, body []byte) ([]byte, *ExitError) {
@@ -97,9 +106,6 @@ func invoke(dirpath, event string, body []byte) ([]byte, *ExitError) {
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, &ExitError{err, -3}
-	}
-	if status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok {
-		log.Printf("Exit Status: %d", status.ExitStatus())
 	}
 
 	return out, nil
