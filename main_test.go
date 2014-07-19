@@ -2,10 +2,10 @@ package main
 
 import "testing"
 
-var dirpath = "handler"
+var dirpath Dirpath = "handler"
 
 func Test_invoke_push(t *testing.T) {
-	res, err := invoke(dirpath, "push", []byte("hoko"))
+	res, err := invoke(dirpath.Path("push"), []byte("hoko"))
 	if string(res) != "hello hoko" {
 		t.Errorf("hello hoko, but '%s'", res)
 	}
@@ -15,7 +15,7 @@ func Test_invoke_push(t *testing.T) {
 }
 
 func Test_invoke_pushd_no_such_file_or_directory(t *testing.T) {
-	res, err := invoke(dirpath, "push.d/no_such_file_or_directory", []byte("hoko"))
+	res, err := invoke(dirpath.Path("push.d/no_such_file_or_directory"), []byte("hoko"))
 	if string(res) != "" {
 		t.Errorf("empty, but '%s'", res)
 	}
@@ -25,7 +25,7 @@ func Test_invoke_pushd_no_such_file_or_directory(t *testing.T) {
 }
 
 func Test_invoke_pushd_permission_denied(t *testing.T) {
-	res, err := invoke(dirpath, "push.d/permission_denied", []byte("hoko"))
+	res, err := invoke(dirpath.Path("push.d/permission_denied"), []byte("hoko"))
 	if string(res) != "" {
 		t.Errorf("empty, but '%s'", res)
 	}
@@ -35,7 +35,7 @@ func Test_invoke_pushd_permission_denied(t *testing.T) {
 }
 
 func Test_invoke_event_pushd_exit_1(t *testing.T) {
-	res, err := invoke(dirpath, "push.d/exit-1", []byte("hoko"))
+	res, err := invoke(dirpath.Path("push.d/exit-1"), []byte("hoko"))
 	if string(res) != "" {
 		t.Errorf("hello hoko, but '%s'", res)
 	}

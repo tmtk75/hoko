@@ -24,8 +24,8 @@ func (self *ExitError) ExitStatus() int {
 	return self.status
 }
 
-func Exec(dirpath, filename string, body []byte) ([]byte, *ExitError) {
-	path, err := exec.LookPath(fmt.Sprintf("%s/%s", dirpath, filename))
+func Exec(path string, body []byte) ([]byte, *ExitError) {
+	path, err := exec.LookPath(path)
 	if err != nil {
 		if _, ok := err.(*exec.Error); ok {
 			return nil, &ExitError{err, -1}
