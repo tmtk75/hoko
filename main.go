@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
@@ -46,7 +49,12 @@ func Run() {
 			return
 		}
 
-		logger.Printf("%s", body)
+		logger.Printf("%s\n", req.Header)
+		logger.Printf("%s\n", body)
+
+		event := strings.ToLower(req.Header.Get("x-github-event"))
+		Invoke(event, b)
+
 		r.JSON(204, nil)
 	})
 	m.Run()
@@ -54,4 +62,23 @@ func Run() {
 
 type WebhookBody struct {
 	Action string `json:"action"`
+}
+
+func Invoke(event string, body []byte) []byte {
+	path, err := exec.LookPath(fmt.Sprintf("event/%s", event))
+	if err != nil {
+		panic(err)
+	}
+	cmd := exec.Command(path)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		panic(err)
+	}
+	stdin.Write(body)
+	stdin.Close()
+	out, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+	return out
 }
