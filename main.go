@@ -13,7 +13,9 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
+	"github.com/hashicorp/serf/command"
 	"github.com/martini-contrib/render"
+	mcli "github.com/mitchellh/cli"
 )
 
 var logger = log.New(os.Stdout, "", log.LstdFlags)
@@ -36,37 +38,55 @@ func main() {
 func Run() {
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/", func(r render.Render, req *http.Request) {
-		b, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			r.Error(400)
-			return
-		}
-
-		//var body WebhookBody
-		var body map[string]interface{}
-		if err := json.Unmarshal(b, &body); err != nil {
-			r.Error(400)
-			return
-		}
-
-		logger.Printf("%s\n", req.Header)
-		logger.Printf("%s\n", body)
-
-		event := strings.ToLower(req.Header.Get("x-github-event"))
-		rs := Invoke(HandlerDirpath, event, b)
-
-		if b, p := rs.Failed(); b {
-			if p {
-				r.Data(207, []byte(rs.Response("plain/text")))
-			} else {
-				r.JSON(500, nil)
-			}
-		} else {
-			r.JSON(204, nil)
-		}
-	})
+	m.Post("/", ExecHandlers)
+	m.Post("/serf/:name", ExecSerf)
 	m.Run()
+}
+
+func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		r.Error(400)
+		return
+	}
+
+	ui := &mcli.BasicUi{Writer: os.Stdout}
+	c := make(chan struct{})
+	q := command.QueryCommand{c, ui}
+	q.Run([]string{params["name"], string(b)})
+
+	r.JSON(204, nil)
+}
+
+func ExecHandlers(r render.Render, req *http.Request) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		r.Error(400)
+		return
+	}
+
+	//var body WebhookBody
+	var body map[string]interface{}
+	if err := json.Unmarshal(b, &body); err != nil {
+		r.Error(400)
+		return
+	}
+
+	logger.Printf("%s\n", req.Header)
+	logger.Printf("%s\n", body)
+
+	event := strings.ToLower(req.Header.Get("x-github-event"))
+	rs := Invoke(HandlerDirpath, event, b)
+
+	if b, p := rs.Failed(); b {
+		if p {
+			r.Data(207, []byte(rs.Response("plain/text")))
+		} else {
+			r.JSON(500, nil)
+		}
+	} else {
+		r.JSON(204, nil)
+	}
 }
 
 func (rs *Results) Response(mimetype string) string {
