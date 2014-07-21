@@ -1,3 +1,6 @@
+//
+// This provides a way to see exit status
+//
 package main
 
 import (

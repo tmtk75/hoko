@@ -1,0 +1,8 @@
+{
+  "tags": {
+    "webhook": ".*"
+  },
+  "event_handlers": [
+    "query:github=./gh-webhook.sh"
+  ]
+}
