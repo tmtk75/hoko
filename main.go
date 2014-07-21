@@ -34,7 +34,6 @@ func main() {
 func Run() {
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/sh", ExecSh)
 	m.Post("/serf/query/:name", ExecSerf)
 	m.Run()
 }
