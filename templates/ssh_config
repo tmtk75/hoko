@@ -1,0 +1,6 @@
+Host github.com
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
+  User git
+  IdentityFile ~/.ssh/id_rsa
+

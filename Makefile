@@ -24,3 +24,15 @@ sample-sh:
 #.py/bin/ansible:
 #	. .py/bin/activate
 #	pip install .py
+#
+
+ping: .py/bin/ansible
+	ansible \
+	  -u ec2-user -m ping -i hosts --private-key ~/.ssh/id_rsa \
+	  $(ec2_ipaddr)
+
+playbook:
+	ansible-playbook  \
+	  -u ec2-user -i hosts --private-key ~/.ssh/id_rsa \
+	  provision.yaml
+
