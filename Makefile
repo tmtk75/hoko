@@ -1,3 +1,6 @@
+run:
+	go run main.go run
+
 agent:
 	serf agent -config-file serf-config.json 
 
@@ -9,11 +12,11 @@ hup:
 
 sample:
 	curl -v -XPOST -H"x-github-event: push" \
-	  localhost:3000/serf/query/github -d '{"action":"push"}'
+	  localhost:3000/serf/query/github -d '{"ref":"refs/head/master"}'
 
 sample-sh:
 	curl -v -XPOST -H"x-github-event: push" \
-	  localhost:3000/ -d '{"action":"push"}'
+	  localhost:3000/ -d '{"ref":"refs/head/master"}'
 
 #
 # ansible

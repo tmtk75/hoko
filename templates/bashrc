@@ -3,4 +3,5 @@ if [ -f /etc/bashrc ]; then
 fi
 
 export GOPATH=$HOME/.go
+export PATH=$PATH:$HOME
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -45,11 +46,23 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 		return
 	}
 
+	var body WebhookBody
+	if err := json.Unmarshal(b, &body); err != nil {
+		r.Error(400)
+		return
+	}
+	body.Event = req.Header.Get("x-github-event")
+	payload, err := json.Marshal(&body)
+	if err != nil {
+		r.Error(500)
+		return
+	}
+
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
 	c := make(chan struct{})
 	q := command.QueryCommand{c, ui}
-	status := q.Run([]string{"-tag", "webhook=.*", "-format", "json", params["name"], string(b)})
+	status := q.Run([]string{"-tag", "webhook=.*", "-format", "json", params["name"], string(payload)})
 
 	log.Printf("status: %v\n", status)
 	if status == 1 {
@@ -57,4 +70,9 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 	} else {
 		r.Data(200, buf.Bytes())
 	}
+}
+
+type WebhookBody struct {
+	Event string `json:"event"`
+	Ref   string `json:"ref"`
 }
