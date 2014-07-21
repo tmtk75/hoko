@@ -15,3 +15,12 @@ sample-sh:
 	curl -v -XPOST -H"x-github-event: push" \
 	  localhost:3000/ -d '{"action":"push"}'
 
+#
+# ansible
+#
+.py:
+	virtualenv .py
+
+#.py/bin/ansible:
+#	. .py/bin/activate
+#	pip install .py

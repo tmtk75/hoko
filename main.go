@@ -50,7 +50,7 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 	ui := &mcli.BasicUi{Writer: &buf}
 	c := make(chan struct{})
 	q := command.QueryCommand{c, ui}
-	status := q.Run([]string{"-tag", "webhook=.*", params["name"], string(b)})
+	status := q.Run([]string{"-tag", "webhook=.*", "-format", "json", params["name"], string(b)})
 
 	log.Printf("status: %v\n", status)
 	if status == 1 {
