@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha1"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -60,6 +62,14 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 		r.Error(500)
 		return
 	}
+
+	hubsig := req.Header.Get("x-hub-signature")
+	log.Printf("X-Hub-Signature: %v", hubsig)
+
+	mac := hmac.New(sha1.New, []byte(os.Getenv("SECRET_TOKEN")))
+	mac.Write(b)
+	em := mac.Sum(nil)
+	log.Printf("expected-MAC: %v", em)
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
