@@ -39,3 +39,14 @@ playbook:
 	  -u ec2-user -i hosts --private-key ~/.ssh/id_rsa \
 	  provision.yaml
 
+jq:
+	brew install jq
+
+#
+#
+#
+sg-hoko:
+	aws ec2 create-security-group --group-name "hoko" --description "hoko" > .sg-hoko.json
+	aws ec2 create-tags --resources `jq -r .GroupId < .sg-hoko.json` --tags Key=role,Value=hoko
+	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 22   --protocol tcp --cidr 0.0.0.0/0
+	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 3000 --protocol tcp --cidr 0.0.0.0/0

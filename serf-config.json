@@ -1,8 +1,4 @@
 {
-  "tags": {
-    "webhook": ".*"
-  },
-  "event_handlers": [
-    "query:github=./gh-webhook.sh"
-  ]
+    "return": "true", 
+    "GroupId": "sg-1b05151a"
 }
