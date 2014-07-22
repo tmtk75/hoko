@@ -45,8 +45,21 @@ jq:
 #
 #
 #
+vpcs:
+	aws ec2 describe-vpcs
+
+vpc-id:
+	@aws ec2 describe-vpcs | jq -r ".Vpcs[0].VpcId"
+
 sg-hoko:
-	aws ec2 create-security-group --group-name "hoko" --description "hoko" > .sg-hoko.json
+	aws ec2 create-security-group --vpc-id $(vpc_id) --group-name "hoko" --description "hoko" > .sg-hoko.json
 	aws ec2 create-tags --resources `jq -r .GroupId < .sg-hoko.json` --tags Key=role,Value=hoko
 	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 22   --protocol tcp --cidr 0.0.0.0/0
 	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 3000 --protocol tcp --cidr 0.0.0.0/0
+
+#
+# Launch a t2.micro instance on AWS console, which can be only launched on a VPC.
+# It's troublesome if you launch it with awscli :D
+#
+launch-ec2-instance:
+	open "https://console.aws.amazon.com/ec2/v2/home?region=ap-northeast-1#LaunchInstanceWizard:"
