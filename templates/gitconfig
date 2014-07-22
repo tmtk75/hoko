@@ -1,0 +1,36 @@
+[alias]
+    ci = commit
+    st = status
+    co = checkout
+    br = branch
+    lg = log --graph --pretty=format:'%Cred%h%Creset - %an - %C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+    sb = show-branch
+    diffst = diff --stat=200,100
+[user]
+	email = ktmtmks@gmail.com
+	name = Tomotaka Sakuma
+[color]
+    status = auto
+    branch = auto
+    tag = auto
+    commit = auto
+    diff = auto
+    interactive = auto
+    ui = auto
+[github]
+    user = tmtk75
+    token = b4ce38e2d5b32b8708ddcc4a67c6d710
+[core]
+	excludesfile = /Users/tsakuma/.gitignore_global
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[push]
+	default = simple
+#[pager]
+#  log = diff-highlight | less
+#  show = diff-highlight | less
+#  diff = diff-highlight | less

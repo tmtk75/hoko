@@ -5,9 +5,18 @@
       home_dir: /home/ec2-user
   tasks:
     - yum: name=tmux
-    - yum: name=git
-    - yum: name=vim
     - yum: name=golang
+
+    # git
+    - yum: name=git
+    - template: src=templates/gitconfig dest={{ home_dir }}/.gitconfig
+
+    # vim
+    - yum: name=vim
+    - file: path={{ home_dir }}/.vim/bundle state=directory recurse=yes owner=ec2-user mode=0755
+    - template: src=templates/vimrc dest={{ home_dir }}/.vimrc mode=0644
+    - git: repo=https://github.com/gmarik/Vundle.vim dest={{ home_dir }}/.vim/bundle/Vundle.vim
+
     - get_url: url=https://dl.bintray.com/mitchellh/serf/0.6.3_linux_amd64.zip
       args:
         dest: "{{ home_dir }}"

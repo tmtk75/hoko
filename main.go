@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -48,6 +49,14 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 		r.Error(400)
 		return
 	}
+	f, err := os.Create("/tmp/body")
+	defer f.Close()
+	if err != nil {
+		r.Error(500)
+		panic(err)
+	}
+	n, err := f.Write(b)
+	log.Printf("save: %v", n)
 
 	var body WebhookBody
 	if err := json.Unmarshal(b, &body); err != nil {
@@ -66,7 +75,9 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 	hubsig := req.Header.Get("x-hub-signature")
 	log.Printf("X-Hub-Signature: %v", hubsig)
 
-	mac := hmac.New(sha1.New, []byte(os.Getenv("SECRET_TOKEN")))
+	secret := os.Getenv("SECRET_TOKEN")
+	key, _ := hex.DecodeString(secret)
+	mac := hmac.New(sha1.New, key)
 	mac.Write(b)
 	em := mac.Sum(nil)
 	log.Printf("expected-MAC: %v", em)

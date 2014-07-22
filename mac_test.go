@@ -18,7 +18,10 @@ func Test_hmac(t *testing.T) {
 	f, _ := os.Open("payload")
 	b, _ := ioutil.ReadAll(f)
 	secretToken := "d9f8cf3b877081d0ed9f8904eb9981f70be3254c"
-	key, _ := hex.DecodeString(secretToken)
+	key, err := hex.DecodeString(secretToken)
+	if err != nil {
+		panic(err)
+	}
 	//key := []byte(secretToken)
 
 	mac := hmac.New(sha1.New, key)
