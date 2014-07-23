@@ -11,8 +11,10 @@ hup:
 	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
 
 sample:
-	curl -v -XPOST -H"x-github-event: push" \
-	  localhost:3000/serf/query/github -d '{"ref":"refs/head/master"}'
+	curl -v -XPOST \
+	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
+	  localhost:3000/serf/query/github \
+	  -d @test/webhook-body.json 
 
 sample-sh:
 	curl -v -XPOST -H"x-github-event: push" \

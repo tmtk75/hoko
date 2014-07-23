@@ -42,17 +42,6 @@ func Run() {
 	m.Run()
 }
 
-func save(r render.Render, name string, b []byte) {
-	f, err := os.Create(name)
-	defer f.Close()
-	if err != nil {
-		r.Error(500)
-		panic(err)
-	}
-	n, err := f.Write(b)
-	log.Printf("save: %v %v", name, n)
-}
-
 func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -60,8 +49,6 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 		r.Error(400)
 		return
 	}
-
-	save(r, "/tmp/reqbody.json", b)
 
 	var body WebhookBody
 	if err := json.Unmarshal(b, &body); err != nil {
@@ -78,19 +65,23 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 		return
 	}
 
-	hubsig := req.Header.Get("x-hub-signature")
-	save(r, "/tmp/x-github-event.txt", []byte(hubsig))
-	log.Printf("X-Hub-Signature: %v", hubsig)
-	//expected := hubsig[4+1 : len(hubsig)]
+	// verify x-hub-signature
+	sign := req.Header.Get("x-hub-signature")
+	expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)]))
+	expected = []byte(expected)
 
 	secret := os.Getenv("SECRET_TOKEN")
-	save(r, "/tmp/secret_token.txt", []byte(secret))
+	key := []byte(secret)
 
-	key, _ := hex.DecodeString(secret)
 	mac := hmac.New(sha1.New, key)
 	mac.Write(b)
-	em := mac.Sum(nil)
-	log.Printf("expected-MAC: %v", em)
+	actual := mac.Sum(nil)
+
+	if !hmac.Equal(actual, expected) {
+		log.Printf("%v != %v", actual, expected)
+		r.Error(400)
+		return
+	}
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
