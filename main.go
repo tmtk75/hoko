@@ -73,6 +73,11 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.
 	if sign != "" {
 		log.Printf("x-hub-signature: %v", sign)
 		//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
+		if len(os.Getenv(ENV_SECRET_TOKEN)) == 0 {
+			log.Printf("length of %v is zero", ENV_SECRET_TOKEN)
+			r.Data(500, []byte("cannot verify because of missing secret token"))
+			return
+		}
 		if len(sign) < 5 {
 			r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
 			return
