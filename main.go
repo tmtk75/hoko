@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,7 +19,9 @@ import (
 	mcli "github.com/mitchellh/cli"
 )
 
-var logger = log.New(os.Stdout, "", log.LstdFlags)
+const ENV_SECRET_TOKEN = "SECRET_TOKEN"
+
+//var logger = log.New(os.Stdout, "", log.LstdFlags)
 
 func main() {
 	app := cli.NewApp()
@@ -42,7 +45,7 @@ func Run() {
 	m.Run()
 }
 
-func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
+func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("ioutil.ReadAll failed: %v", req.Body)
@@ -67,20 +70,26 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 
 	// verify x-hub-signature
 	sign := req.Header.Get("x-hub-signature")
-	expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)]))
-	expected = []byte(expected)
+	if sign != "" {
+		log.Printf("x-hub-signature: %v", sign)
+		//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
+		if len(sign) < 5 {
+			r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
+			return
+		}
+		expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)]))
+		expected = []byte(expected)
 
-	secret := os.Getenv("SECRET_TOKEN")
-	key := []byte(secret)
+		mac := hmac.New(sha1.New, []byte(os.Getenv(ENV_SECRET_TOKEN)))
+		mac.Write(b)
+		actual := mac.Sum(nil)
 
-	mac := hmac.New(sha1.New, key)
-	mac.Write(b)
-	actual := mac.Sum(nil)
-
-	if !hmac.Equal(actual, expected) {
-		log.Printf("%v != %v", actual, expected)
-		r.Error(400)
-		return
+		if !hmac.Equal(actual, expected) {
+			log.Printf("%v != %v", actual, expected)
+			w.Header().Set("content-type", "text/plain")
+			r.Data(400, []byte("x-hub-signature not verified"))
+			return
+		}
 	}
 
 	var buf bytes.Buffer
