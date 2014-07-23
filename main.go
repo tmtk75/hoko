@@ -81,6 +81,7 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params) {
 	hubsig := req.Header.Get("x-hub-signature")
 	save(r, "/tmp/x-github-event.txt", []byte(hubsig))
 	log.Printf("X-Hub-Signature: %v", hubsig)
+	//expected := hubsig[4+1 : len(hubsig)]
 
 	secret := os.Getenv("SECRET_TOKEN")
 	save(r, "/tmp/secret_token.txt", []byte(secret))

@@ -9,26 +9,42 @@ import (
 	"testing"
 )
 
-func Test_hmac(t *testing.T) {
-	// sha1=19c5b5cd530fa784e911125b7fa17c09f18f1db0
-	xhubsig := "19c5b5cd530fa784e911125b7fa17c09f18f1db0"
-	expected, _ := hex.DecodeString(xhubsig)
+var body, key, sign []byte
 
-	//
-	f, _ := os.Open("payload")
-	b, _ := ioutil.ReadAll(f)
-	secretToken := "d9f8cf3b877081d0ed9f8904eb9981f70be3254c"
-	key, err := hex.DecodeString(secretToken)
-	if err != nil {
-		panic(err)
-	}
-	//key := []byte(secretToken)
+func init() {
+	fbody, _ := os.Open("reqbody.json")
+	fsec, _ := os.Open("secret_token.txt")
+	fsig, _ := os.Open("x-hub-signature.txt")
+	defer fbody.Close()
+	defer fsec.Close()
+	defer fsig.Close()
+	body, _ = ioutil.ReadAll(fbody)
+	key, _ = ioutil.ReadAll(fsec)
+	sign, _ = ioutil.ReadAll(fsig)
+}
+
+func Test_x_hub_signature1(t *testing.T) {
+	expected := sign[4+1 : len(sign)]
 
 	mac := hmac.New(sha1.New, key)
-	mac.Write(b)
-	actual := mac.Sum(nil)
+	mac.Write(body)
+	actualBytes := mac.Sum(nil)
+	actualStr := hex.EncodeToString(actualBytes)
+	actual := []byte(actualBytes)
 
-	if !hmac.Equal(expected, actual) {
-		t.Errorf("\nexpected-MAC: %v\nactual-MAC: %v\n", expected, actual)
+	if actualStr != string(expected) {
+		t.Errorf("%v != %v\n", actual, expected)
+	}
+}
+
+func Test_x_hub_signature2(t *testing.T) {
+	expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)]))
+
+	mac := hmac.New(sha1.New, key)
+	mac.Write(body)
+	actualBytes := mac.Sum(nil)
+
+	if !hmac.Equal(actualBytes, expected) {
+		t.Errorf("%v != %v\n", actualBytes, expected)
 	}
 }
