@@ -21,7 +21,7 @@ import (
 
 const ENV_SECRET_TOKEN = "SECRET_TOKEN"
 
-//var logger = log.New(os.Stdout, "", log.LstdFlags)
+var ctx *cli.Context
 
 func main() {
 	app := cli.NewApp()
@@ -29,8 +29,13 @@ func main() {
 	app.Version = "0.0.0"
 	app.Commands = []cli.Command{
 		{
-			Name: "run",
+			Name:  "run",
+			Usage: "Run hoko server",
+			Flags: []cli.Flag{
+				cli.BoolFlag{"debug,d", "debug mode not to verify x-hub-signature"},
+			},
 			Action: func(c *cli.Context) {
+				ctx = c
 				Run()
 			},
 		},
@@ -70,7 +75,7 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.
 
 	// verify x-hub-signature
 	sign := req.Header.Get("x-hub-signature")
-	if sign != "" {
+	if !ctx.Bool("d") {
 		log.Printf("x-hub-signature: %v", sign)
 		//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
 		if len(os.Getenv(ENV_SECRET_TOKEN)) == 0 {
