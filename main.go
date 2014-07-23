@@ -15,6 +15,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
 	"github.com/hashicorp/serf/command"
+	"github.com/hashicorp/serf/command/agent"
 	"github.com/martini-contrib/render"
 	mcli "github.com/mitchellh/cli"
 )
@@ -37,6 +38,24 @@ func main() {
 			Action: func(c *cli.Context) {
 				ctx = c
 				Run()
+			},
+		},
+		{
+			Name:  "agent",
+			Usage: "Run serf agent with a config file",
+			Action: func(c *cli.Context) {
+				if len(c.Args()) == 0 {
+					cli.ShowCommandHelp(c, "agent")
+					os.Exit(1)
+				}
+				_, err := os.Stat(c.Args()[0])
+				if err != nil {
+					log.Fatalf("Not found: %v\n", c.Args()[0])
+				}
+
+				ui := &mcli.BasicUi{Writer: os.Stdout}
+				q := agent.Command{Ui: ui, ShutdownCh: make(chan struct{})}
+				q.Run([]string{"--config-file", c.Args()[0]})
 			},
 		},
 	}
