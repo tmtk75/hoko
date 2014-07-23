@@ -87,7 +87,7 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.
 			r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
 			return
 		}
-		expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)]))
+		expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)])) // 4+1 is to skip `sha1=`
 		expected = []byte(expected)
 
 		mac := hmac.New(sha1.New, []byte(os.Getenv(ENV_SECRET_TOKEN)))
