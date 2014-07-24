@@ -68,3 +68,6 @@ sg-hoko:
 #
 launch-ec2-instance:
 	open "https://console.aws.amazon.com/ec2/v2/home?region=ap-northeast-1#LaunchInstanceWizard:"
+
+gox:
+	gox -os=linux -arch=amd64 -output "{{.Dir}}_{{.OS}}_{{.Arch}}"
