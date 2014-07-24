@@ -128,9 +128,10 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.
 	if status == 1 {
 		log.Printf("status: %v", status)
 		r.Data(500, buf.Bytes())
-	} else {
-		r.Data(200, buf.Bytes())
+		return
 	}
+
+	r.Data(200, buf.Bytes())
 }
 
 type WebhookBody struct {
