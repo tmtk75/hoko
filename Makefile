@@ -1,5 +1,5 @@
 run:
-	go run main.go run
+	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go run
 
 agent:
 	serf agent -config-file serf-config.json 

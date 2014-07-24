@@ -63,6 +63,10 @@ func main() {
 }
 
 func Run() {
+	//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
+	if !ctx.Bool("d") && len(os.Getenv(ENV_SECRET_TOKEN)) == 0 {
+		log.Fatalf("length of %v is zero", ENV_SECRET_TOKEN)
+	}
 	m := martini.Classic()
 	m.Use(render.Renderer())
 	m.Post("/serf/query/:name", ExecSerf)
@@ -96,12 +100,6 @@ func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.
 	sign := req.Header.Get("x-hub-signature")
 	if !ctx.Bool("d") {
 		log.Printf("x-hub-signature: %v", sign)
-		//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
-		if len(os.Getenv(ENV_SECRET_TOKEN)) == 0 {
-			log.Printf("length of %v is zero", ENV_SECRET_TOKEN)
-			r.Data(500, []byte("cannot verify because of missing secret token"))
-			return
-		}
 		if len(sign) < 5 {
 			r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
 			return
