@@ -146,8 +146,10 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 }
 
 type WebhookBody struct {
-	Event  string `json:"event"`
-	Ref    string `json:"ref"`
-	After  string `json:"after"`
-	Before string `json:"before"`
+	Event       string                 `json:"event"`
+	Ref         string                 `json:"ref"`
+	After       string                 `json:"after"`
+	Before      string                 `json:"before"`
+	Head_commit string                 `json:"head_commit"`
+	Pusher      map[string]interface{} `json:"pusher"`
 }
