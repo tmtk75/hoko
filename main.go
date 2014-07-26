@@ -20,9 +20,10 @@ import (
 	mcli "github.com/mitchellh/cli"
 )
 
-const ENV_SECRET_TOKEN = "SECRET_TOKEN"
-
-var ctx *cli.Context
+const (
+	ENV_SECRET_TOKEN = "SECRET_TOKEN"
+	CONFIG_PATH      = "CONFIG_PATH"
+)
 
 func main() {
 	app := cli.NewApp()
@@ -36,44 +37,48 @@ func main() {
 				cli.BoolFlag{"debug,d", "debug mode not to verify x-hub-signature"},
 			},
 			Action: func(c *cli.Context) {
-				ctx = c
-				Run()
+				Run(c)
 			},
 		},
 		{
 			Name:  "agent",
 			Usage: "Run serf agent with a config file",
 			Action: func(c *cli.Context) {
-				if len(c.Args()) == 0 {
-					cli.ShowCommandHelp(c, "agent")
-					os.Exit(1)
+				confpath := "./serf.conf"
+				if len(os.Getenv(CONFIG_PATH)) > 0 {
+					confpath = os.Getenv(CONFIG_PATH)
 				}
-				_, err := os.Stat(c.Args()[0])
+				_, err := os.Stat(confpath)
 				if err != nil {
-					log.Fatalf("Not found: %v\n", c.Args()[0])
+					log.Fatalf("Not found: %v\n", confpath)
 				}
+
+				go Run(c)
 
 				ui := &mcli.BasicUi{Writer: os.Stdout}
 				q := agent.Command{Ui: ui, ShutdownCh: make(chan struct{})}
-				q.Run([]string{"--config-file", c.Args()[0]})
+				q.Run([]string{"--config-file", "./serf.conf"})
 			},
 		},
 	}
 	app.Run(os.Args)
 }
 
-func Run() {
+func Run(ctx *cli.Context) {
 	//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
 	if !ctx.Bool("d") && len(os.Getenv(ENV_SECRET_TOKEN)) == 0 {
 		log.Fatalf("length of %v is zero", ENV_SECRET_TOKEN)
 	}
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/serf/query/:name", ExecSerf)
+	m.Post("/serf/query/:name", func(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
+		ExecSerf(ctx, r, req, params, w)
+	})
+
 	m.Run()
 }
 
-func ExecSerf(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
+func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("ioutil.ReadAll failed: %v", req.Body)
