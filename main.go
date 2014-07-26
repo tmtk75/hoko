@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -107,25 +108,10 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		return
 	}
 
-	// verify x-hub-signature
-	sign := req.Header.Get("x-hub-signature")
 	if !ctx.Bool("d") {
-		log.Printf("x-hub-signature: %v", sign)
-		if len(sign) < 5 {
-			r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
-			return
-		}
-		expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)])) // 4+1 is to skip `sha1=`
-		expected = []byte(expected)
-
-		mac := hmac.New(sha1.New, []byte(os.Getenv(ENV_SECRET_TOKEN)))
-		mac.Write(b)
-		actual := mac.Sum(nil)
-
-		if !hmac.Equal(actual, expected) {
-			log.Printf("%v != %v", actual, expected)
-			w.Header().Set("content-type", "text/plain")
-			r.Data(400, []byte("x-hub-signature not verified"))
+		sign := req.Header.Get("x-hub-signature")
+		err := verify(sign, b, r, w)
+		if err != nil {
 			return
 		}
 	}
@@ -143,6 +129,30 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 	}
 
 	r.Data(200, buf.Bytes())
+}
+
+func verify(sign string, b []byte, r render.Render, w http.ResponseWriter) error {
+	log.Printf("x-hub-signature: %v", sign)
+	if len(sign) < 5 {
+		r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
+		return errors.New("")
+	}
+
+	expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)])) // 4+1 is to skip `sha1=`
+	expected = []byte(expected)
+
+	mac := hmac.New(sha1.New, []byte(os.Getenv(ENV_SECRET_TOKEN)))
+	mac.Write(b)
+	actual := mac.Sum(nil)
+
+	if !hmac.Equal(actual, expected) {
+		log.Printf("%v != %v", actual, expected)
+		w.Header().Set("content-type", "text/plain")
+		r.Data(400, []byte("x-hub-signature not verified"))
+		return errors.New("")
+	}
+
+	return nil
 }
 
 type WebhookBody struct {
