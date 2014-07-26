@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
@@ -50,7 +51,8 @@ func main() {
 				}
 				_, err := os.Stat(confpath)
 				if err != nil {
-					log.Fatalf("Not found: %v\n", confpath)
+					dir, _ := os.Getwd()
+					log.Fatalf("Not found: %v\n", filepath.Join(dir, confpath))
 				}
 
 				go Run(c)
