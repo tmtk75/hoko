@@ -150,6 +150,6 @@ type WebhookBody struct {
 	Ref         string                 `json:"ref"`
 	After       string                 `json:"after"`
 	Before      string                 `json:"before"`
-	Head_commit string                 `json:"head_commit"`
-	Pusher      map[string]interface{} `json:"pusher"`
+	Head_commit map[string]interface{} `json:"head_commit,omitempty"`
+	Pusher      map[string]interface{} `json:"pusher,omitempty"`
 }
