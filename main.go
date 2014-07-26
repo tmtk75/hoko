@@ -26,24 +26,20 @@ const (
 	CONFIG_PATH      = "CONFIG_PATH"
 )
 
+var flags = []cli.Flag{
+	cli.BoolFlag{"debug,d", "debug mode not to verify x-hub-signature"},
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.0.0"
+	app.Version = "0.1.0"
+	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = []cli.Command{
 		{
 			Name:  "run",
-			Usage: "Run hoko server",
-			Flags: []cli.Flag{
-				cli.BoolFlag{"debug,d", "debug mode not to verify x-hub-signature"},
-			},
-			Action: func(c *cli.Context) {
-				Run(c)
-			},
-		},
-		{
-			Name:  "agent",
-			Usage: "Run serf agent with a config file",
+			Usage: "Run hoko server with serf agent",
+			Flags: flags,
 			Action: func(c *cli.Context) {
 				confpath := "./serf.conf"
 				if len(os.Getenv(CONFIG_PATH)) > 0 {
@@ -60,6 +56,14 @@ func main() {
 				ui := &mcli.BasicUi{Writer: os.Stdout}
 				q := agent.Command{Ui: ui, ShutdownCh: make(chan struct{})}
 				q.Run([]string{"--config-file", "./serf.conf"})
+			},
+		},
+		{
+			Name:  "server",
+			Usage: "Run hoko server alone",
+			Flags: flags,
+			Action: func(c *cli.Context) {
+				Run(c)
 			},
 		},
 	}
@@ -142,6 +146,8 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 }
 
 type WebhookBody struct {
-	Event string `json:"event"`
-	Ref   string `json:"ref"`
+	Event  string `json:"event"`
+	Ref    string `json:"ref"`
+	After  string `json:"after"`
+	Before string `json:"before"`
 }
