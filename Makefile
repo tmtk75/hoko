@@ -2,7 +2,7 @@
 #
 #
 run:
-	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go run
+	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go client.go run
 
 tags:
 	serf tags -set webhook=push
@@ -18,6 +18,11 @@ sample:
 
 hup:
 	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
+
+post:
+	echo '{"event":"custom"}' | \
+	  SECRET_TOKEN=`cat test/secret_token.txt` go run \
+	  main.go client.go post
 
 #
 # ansible

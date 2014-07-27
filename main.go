@@ -31,43 +31,53 @@ var flags = []cli.Flag{
 	cli.BoolFlag{"debug,d", "debug mode not to verify x-hub-signature"},
 }
 
+var commands = []cli.Command{
+	{
+		Name:  "run",
+		Usage: "Run hoko server with serf agent",
+		Flags: flags,
+		Action: func(c *cli.Context) {
+			confpath := "./serf.conf"
+			if len(os.Getenv(CONFIG_PATH)) > 0 {
+				confpath = os.Getenv(CONFIG_PATH)
+			}
+			_, err := os.Stat(confpath)
+			if err != nil {
+				dir, _ := os.Getwd()
+				log.Fatalf("Not found: %v\n", filepath.Join(dir, confpath))
+			}
+
+			go Run(c)
+
+			ui := &mcli.BasicUi{Writer: os.Stdout}
+			q := agent.Command{Ui: ui, ShutdownCh: make(chan struct{})}
+			q.Run([]string{"--config-file", "./serf.conf"})
+		},
+	},
+	{
+		Name:  "server",
+		Usage: "Run hoko server alone",
+		Flags: flags,
+		Action: func(c *cli.Context) {
+			Run(c)
+		},
+	},
+	{
+		Name:  "post",
+		Usage: "Post a request",
+		Flags: flags,
+		Action: func(c *cli.Context) {
+			PostRequest()
+		},
+	},
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
 	app.Version = "0.1.0"
 	app.Usage = "A http server for github webhook with serf agent"
-	app.Commands = []cli.Command{
-		{
-			Name:  "run",
-			Usage: "Run hoko server with serf agent",
-			Flags: flags,
-			Action: func(c *cli.Context) {
-				confpath := "./serf.conf"
-				if len(os.Getenv(CONFIG_PATH)) > 0 {
-					confpath = os.Getenv(CONFIG_PATH)
-				}
-				_, err := os.Stat(confpath)
-				if err != nil {
-					dir, _ := os.Getwd()
-					log.Fatalf("Not found: %v\n", filepath.Join(dir, confpath))
-				}
-
-				go Run(c)
-
-				ui := &mcli.BasicUi{Writer: os.Stdout}
-				q := agent.Command{Ui: ui, ShutdownCh: make(chan struct{})}
-				q.Run([]string{"--config-file", "./serf.conf"})
-			},
-		},
-		{
-			Name:  "server",
-			Usage: "Run hoko server alone",
-			Flags: flags,
-			Action: func(c *cli.Context) {
-				Run(c)
-			},
-		},
-	}
+	app.Commands = commands
 	app.Run(os.Args)
 }
 

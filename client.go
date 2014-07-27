@@ -16,7 +16,7 @@ import (
 	"os"
 )
 
-func main() {
+func PostRequest() {
 	secret := os.Getenv("SECRET_TOKEN")
 	if len(secret) == 0 {
 		log.Fatalf("SECRET_TOKEN is empty")
@@ -36,7 +36,7 @@ func main() {
 
 	sign := fmt.Sprintf("sha1=%s", hex.EncodeToString(actual))
 
-	req, err := http.NewRequest("POST", "http://localhost:3000/serf/query/github", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", "http://localhost:3000/serf/query/hoko", bytes.NewReader(body))
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
