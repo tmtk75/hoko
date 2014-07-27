@@ -152,6 +152,22 @@ If secret token doesn't match, hoko responds HTTP status 400.
 
 # A use-case, receiving webhook events at a different host
 
+Here is an overview for this section.
+
+```
+       github
+         |
+         v
+       :3000
+     hoko-master                           hoko-slave
+     54.92.127.130                         54.92.118.98
+                     :7946 <----> :7946
+       serf agent                            another
+       in hoko                               serf agent
+                     hoko[webhook] event
+                    -------------------->    query:hoko="cat >> payloads"
+```
+
 Let's say you have two hosts like
 
 ```
@@ -159,7 +175,7 @@ hoko-master    54.92.127.130
 hoko-slave     54.92.118.98
 ```
 
-Open a few ports, 22, 3000, 7946 and 7373.
+Open a few ports, 22, 3000, 7946
 
 
 In 54.92.127.130, run hoko with a secret token which `secret.txt has`.
@@ -171,9 +187,10 @@ $ SECRET_TOKEN=$(cat ./secrettxt) ./hoko_linux_amd64 run
 In 54.92.118.98, Run a serf agent joining 54.92.127.130.
 
 ```
-$ ./serf agent -tag webhook=foobar \
-  -event-handler=query:hoko="cat >> payloads" \
-  -join 54.92.127.130
+$ ./serf agent \
+    -tag webhook=foobar \
+    -event-handler=query:hoko="cat >> payloads" \
+    -join 54.92.127.130
 ```
 
 In the setting of webhook, Set Payload URL: `http://54.92.127.130:3000/serf/query/hoko`
