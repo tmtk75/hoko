@@ -75,5 +75,11 @@ launch-ec2-instance:
 # See to install and setup gox
 # https://github.com/mitchellh/gox
 gox:
-	gox -os=linux -arch=amd64 -output "{{.Dir}}_{{.OS}}_{{.Arch}}"
+	gox -os="linux darwin" -arch=amd64 -output "{{.Dir}}_{{.OS}}_{{.Arch}}"
 
+zip: hoko_linux_amd64 hoko_darwin_amd64
+	zip hoko_linux_amd64.zip hoko_linux_amd64 
+	zip hoko_darwin_amd64.zip hoko_darwin_amd64
+
+clean:
+	rm *.zip hoko_*_amd64
