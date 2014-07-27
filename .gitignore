@@ -1,4 +1,6 @@
 .*.swp
 .py
 .*.json
+.vagrant
+.DS_Store
 

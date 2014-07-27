@@ -1,14 +1,11 @@
+#
+#
+#
 run:
 	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go run
 
-agent:
-	serf agent -config-file serf-config.json 
-
 tags:
 	serf tags -set webhook=push
-
-hup:
-	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
 
 secret:
 	@cat test/secret_token.txt
@@ -16,12 +13,11 @@ secret:
 sample:
 	curl -v -XPOST \
 	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
-	  localhost:3000/serf/query/github \
+	  localhost:3000/serf/query/hoko \
 	  -d @test/webhook-body.json 
 
-sample-sh:
-	curl -v -XPOST -H"x-github-event: push" \
-	  localhost:3000/ -d '{"ref":"refs/head/master"}'
+hup:
+	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
 
 #
 # ansible
@@ -29,26 +25,28 @@ sample-sh:
 .py:
 	virtualenv .py
 
-#.py/bin/ansible:
-#	. .py/bin/activate
-#	pip install .py
-#
+# DON'T FORGET source
+# $ source .py/bin/activate
+
+user=ec2-user
+private_key=~/.ssh/id_rsa
+ec2_ipaddr=replace with your host
+
+#user=vagrant
+#private_key=~/.vagrant.d/insecure_private_key
+#ec2_ipaddr=192.168.111.222
 
 ping: .py/bin/ansible
-	ansible \
-	  -u ec2-user -m ping -i hosts --private-key ~/.ssh/id_rsa \
-	  $(ec2_ipaddr)
+	ansible -u $(user) -m ping -i provision/hosts --private-key $(private_key) $(ec2_ipaddr)
 
 playbook:
-	ansible-playbook  \
-	  -u ec2-user -i hosts --private-key ~/.ssh/id_rsa \
-	  provision.yaml
+	ansible-playbook -u $(user) -i provision/hosts --private-key $(private_key) provision/playbook.yaml
 
 jq:
 	brew install jq
 
 #
-#
+# secrity groups
 #
 vpcs:
 	aws ec2 describe-vpcs
@@ -69,5 +67,8 @@ sg-hoko:
 launch-ec2-instance:
 	open "https://console.aws.amazon.com/ec2/v2/home?region=ap-northeast-1#LaunchInstanceWizard:"
 
+# See to install and setup gox
+# https://github.com/mitchellh/gox
 gox:
 	gox -os=linux -arch=amd64 -output "{{.Dir}}_{{.OS}}_{{.Arch}}"
+

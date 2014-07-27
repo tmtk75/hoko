@@ -1,12 +1,9 @@
-hoko
+# hoko
 
-hoko is a HTTP server for github webhooks.
+A HTTP server for github webhook.
 
-# Getting Started
+## Getting Started
 
-It's better to open three different terminals.
-
-Then type `make agent`, `make run` and `make sample`.
 
 # Configuration
 ## Port to 
