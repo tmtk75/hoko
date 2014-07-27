@@ -53,9 +53,26 @@ $ curl localhost:3000/serf/query/hoko -d '{}'
 OK, hoko runs perfectly.
 
 
-## How it works
+## How it works at serf level
 
-The previous response is built by `handler/echo.sh` at default via serf query. [Serf configuration file](http://www.serfdom.io/docs/agent/options.html), `serf.conf` defines it.
+hoko invokes query command when it receives POST request.
+
+```
+curl localhost:3000/serf/query/hoko -d '{}'
+```
+
+For example, this request makes hoko to invoke the next command.
+	```
+$ serf query -tag webhook=.* hoko "{}"
+```
+
+In order to handle this query event, it needs a setting about tag and serf event-handler option like
+
+```
+-tag webhook=<something> -event-handler=query:hoko=<command>
+```
+
+The previous response is built by `handler/echo.sh` at default via serf query. A [serf configuration file](http://www.serfdom.io/docs/agent/options.html), `serf.conf` defines it to handle events.
 
 ```
 {
@@ -68,7 +85,44 @@ The previous response is built by `handler/echo.sh` at default via serf query. [
 }
 ```
 
-hoko responds stdout from serf agent as response
+hoko responds stdout from serf agent as HTTP response.
+
+Next diagram briefly describes typical flow of hoko.
+
+```
+ [curl]      [hoko]     
+   |            |
+   |            |------>> [serf agent]  (This agent is launched by hoko)
+   |            |              |
+   |    POST    |              |
+   |----------->|              |
+   |            |  validate    |
+   |            |-----,        |
+   |            |     |        |
+   |            |<----'        |
+   |            |              |
+   |            |  query hoko  |
+   |            |-----,        |
+   |            |     |        |
+   |            |     |------->|
+   |            |     |        |  exec echo.sh
+   |            |     |        |-----, 
+   |            |     |        |     |
+   |            |     |        |<----'         [other agents]
+   |            |     |        |                     |
+   |            |     |        | propagate           |
+   |            |     |        |----------- - - - - >|
+   |            |     |        |                     |
+   |            |     |        | responses
+   |            |     |        |<----------
+   |            |     |        |
+   |            |     |<-------'
+   |            |     |
+   |            |<----'
+   |  response  |
+   |<-----------|
+   |            |
+```
 
 
 # Github Webhook Configration
