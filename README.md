@@ -2,6 +2,9 @@
 
 A HTTP server for github webhook with serf agent, which provides HTTP interface to serf agent for query. The main purpose is to propagate webhook events to serf cluster. Any hosts can receive webhook events anywhere if the hosts join the serf cluster.
 
+<img src='http://tmtk75.github.com.s3.amazonaws.com/hoko/demo.gif'/>
+
+
 ## Getting Started
 
 Download a configuration file, <https://raw.githubusercontent.com/tmtk75/hoko/master/serf.conf> and save as `serf.conf`.
@@ -93,31 +96,25 @@ Next diagram briefly describes typical flow of hoko.
  [curl]      [hoko]     
    |            |
    |            |------>> [serf agent]  (This agent is launched by hoko)
-   |            |              |
    |    POST    |              |
    |----------->|              |
    |            |  validate    |
    |            |-----,        |
    |            |     |        |
    |            |<----'        |
-   |            |              |
    |            |  query hoko  |
    |            |-----,        |
-   |            |     |        |
    |            |     |------->|
    |            |     |        |  exec echo.sh
    |            |     |        |-----, 
    |            |     |        |     |
    |            |     |        |<----'         [other agents]
-   |            |     |        |                     |
    |            |     |        | propagate           |
    |            |     |        |----------- - - - - >|
    |            |     |        |                     |
    |            |     |        | responses
    |            |     |        |<----------
-   |            |     |        |
    |            |     |<-------'
-   |            |     |
    |            |<----'
    |  response  |
    |<-----------|
@@ -219,3 +216,20 @@ $ cat payloads
 ```
 
 It means the webhook event was propagated and the serf agent received it.
+
+## Contribution
+
+1. Fork it (<http://github.com/tmtk75/hoko>)
+1. Create your feature branch (git checkout -b my-new-feature)
+1. Commit your changes (git commit -am 'Add some feature')
+1. Push to the branch (git push origin my-new-feature)
+1. Create new Pull Request
+
+## Credits
+
+serf: <https://github.com/hashicorp/serf>
+
+## License
+
+[MIT License](http://opensource.org/licenses/MIT)
+
