@@ -2,7 +2,7 @@
 #
 #
 run:
-	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go client.go run
+	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go client.go run -d
 
 tags:
 	serf tags -set webhook=push

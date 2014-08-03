@@ -130,7 +130,10 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 	ui := &mcli.BasicUi{Writer: &buf}
 	c := make(chan struct{})
 	q := command.QueryCommand{c, ui}
-	status := q.Run([]string{"-tag", "webhook=.*", "-format", "json", params["name"], string(payload)})
+	args := []string{"-tag", "webhook=.*", "-format", "json"}
+	args = append(args, buildArgs(req.URL.Query())...)
+	args = append(args, []string{params["name"], string(payload)}...)
+	status := q.Run(args)
 
 	if status == 1 {
 		log.Printf("status: %v", status)
@@ -163,6 +166,17 @@ func verify(sign string, b []byte, r render.Render, w http.ResponseWriter) error
 	}
 
 	return nil
+}
+
+func buildArgs(params map[string][]string) []string {
+	a := make([]string, len(params)*2)
+	i := 0
+	for k, v := range params {
+		a[i*2] = "-tag"
+		a[i*2+1] = fmt.Sprintf("%v=%v", k, v[0])
+		i += 1
+	}
+	return a
 }
 
 type WebhookBody struct {
