@@ -75,11 +75,18 @@ launch-ec2-instance:
 # See to install and setup gox
 # https://github.com/mitchellh/gox
 gox:
-	gox -os="linux darwin" -arch=amd64 -output "{{.Dir}}_{{.OS}}_{{.Arch}}"
+	gox -os="linux darwin" -arch=amd64 -output "pkg/dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
-zip: hoko_linux_amd64 hoko_darwin_amd64
-	zip hoko_linux_amd64.zip hoko_linux_amd64 
-	zip hoko_darwin_amd64.zip hoko_darwin_amd64
+release:
+	ghr -u tmtk75 v0.1.1 pkg/dist/hoko_linux_amd64.zip
+
+zip: pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko_darwin_amd64.zip
+
+pkg/dist/hoko_linux_amd64.zip: pkg/dist/hoko_linux_amd64
+	cd pkg/dist; mv hoko_linux_amd64 hoko; zip hoko_linux_amd64.zip hoko
+
+pkg/dist/hoko_darwin_amd64.zip: pkg/dist/hoko_darwin_amd64
+	cd pkg/dist; mv hoko_darwin_amd64 hoko; zip hoko_darwin_amd64.zip hoko
 
 clean:
 	rm *.zip hoko_*_amd64
