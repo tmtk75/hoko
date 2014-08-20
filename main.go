@@ -28,7 +28,7 @@ const (
 )
 
 var flags = []cli.Flag{
-	cli.BoolFlag{"debug,d", "debug mode not to verify x-hub-signature"},
+	cli.BoolFlag{Name: "debug,d", Usage: "debug mode not to verify x-hub-signature"},
 }
 
 var commands = []cli.Command{
