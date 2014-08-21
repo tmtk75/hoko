@@ -37,7 +37,8 @@ You can see some outputs in the terminal hoko runs like this, which is mainly se
 ==> Starting Serf agent...
 ==> Starting Serf agent RPC...
 ...
-    2014/07/27 10:18:04 [INFO] agent: Received event: member-join```
+    2014/07/27 10:18:04 [INFO] agent: Received event: member-join
+```
 
 In another terminal, execute curl like this and you'll get a response in JSON.
 
@@ -61,11 +62,12 @@ OK, hoko runs perfectly.
 hoko invokes query command when it receives POST request.
 
 ```
-curl localhost:3000/serf/query/hoko -d '{}'
+curl -XPOST localhost:3000/serf/query/hoko -d '{}'
 ```
 
 For example, this request makes hoko to invoke the next command.
-	```
+	
+```
 $ serf query -tag webhook=.* hoko "{}"
 ```
 
