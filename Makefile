@@ -90,3 +90,21 @@ pkg/dist/hoko_darwin_amd64.zip: pkg/dist/hoko_darwin_amd64
 
 clean:
 	rm *.zip hoko_*_amd64
+
+##
+ssh-config:
+	vagrant ssh-config > ssh-config
+
+galaxy:
+	ansible-galaxy install -p roles tmtk75.hoko
+
+vagrant-deploy: ssh-config
+	ansible-playbook -i "default," playbook.yaml
+
+##
+ansible: .e/bin/ansible
+.e/bin/ansible: .e
+	.e/bin/pip2.7 install ansible
+.e:
+	virtualenv .e
+
