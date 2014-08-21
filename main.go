@@ -29,7 +29,7 @@ const (
 
 var flags = []cli.Flag{
 	cli.StringFlag{Name: "config-file", Value: "./serf.conf", Usage: "Path to serf.conf", EnvVar: "HOKO_CONFIG_FILE"},
-	cli.BoolFlag{Name: "debug,d", Usage: "Debug mode not to verify x-hub-signature"},
+	cli.BoolFlag{Name: "debug,d", Usage: "Debug mode not to verify x-hub-signature", EnvVar: "HOKO_DEBUG"},
 }
 
 var commands = []cli.Command{
