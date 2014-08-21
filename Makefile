@@ -89,7 +89,7 @@ pkg/dist/hoko_darwin_amd64.zip: pkg/dist/hoko_darwin_amd64
 	cd pkg/dist; mv hoko_darwin_amd64 hoko; zip hoko_darwin_amd64.zip hoko
 
 clean:
-	rm *.zip hoko_*_amd64
+	rm *.zip hoko_*_amd64 ssh-config
 
 ##
 ssh-config:
