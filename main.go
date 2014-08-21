@@ -79,6 +79,7 @@ func main() {
 	app.Version = "0.1.1"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
+	os.Setenv("PORT", "9981")
 	app.Run(os.Args)
 }
 

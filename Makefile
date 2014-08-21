@@ -14,7 +14,7 @@ secret:
 sample:
 	curl -v -XPOST \
 	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
-	  localhost:3000/serf/query/hoko \
+	  localhost:9981/serf/query/hoko \
 	  -d @test/webhook-body.json 
 
 hup:
@@ -64,7 +64,7 @@ sg-hoko:
 	aws ec2 create-security-group --vpc-id $(vpc_id) --group-name "hoko" --description "hoko" > .sg-hoko.json
 	aws ec2 create-tags --resources `jq -r .GroupId < .sg-hoko.json` --tags Key=role,Value=hoko
 	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 22   --protocol tcp --cidr 0.0.0.0/0
-	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 3000 --protocol tcp --cidr 0.0.0.0/0
+	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 9981 --protocol tcp --cidr 0.0.0.0/0
 
 #
 # Launch a t2.micro instance on AWS console, which can be only launched on a VPC.

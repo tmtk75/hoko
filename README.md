@@ -25,7 +25,7 @@ Then the expected layout is:
       `-- echo.sh
 ```
 
-OK, Run it. It starts listening at 3000.
+OK, Run it. It starts listening at 9981.
 
 ```
 $ ./hoko run -d
@@ -43,7 +43,7 @@ You can see some outputs in the terminal hoko runs like this, which is mainly se
 In another terminal, execute curl like this and you'll get a response in JSON.
 
 ```
-$ curl localhost:3000/serf/query/hoko -d '{}'
+$ curl -XPOST localhost:9981/serf/query/hoko -d '{}'
 {
   "Acks": [
     "hostname"
@@ -62,7 +62,7 @@ OK, hoko runs perfectly.
 hoko invokes query command when it receives POST request.
 
 ```
-curl -XPOST localhost:3000/serf/query/hoko -d '{}'
+curl -XPOST localhost:9981/serf/query/hoko -d '{}'
 ```
 
 For example, this request makes hoko to invoke the next command.
@@ -130,7 +130,7 @@ Configure your webhook rerfering [Webhooks](https://developer.github.com/webhook
 
 For example,
 
-* Payload URL: http://54.92.95.64:3000/serf/query/hoko
+* Payload URL: http://54.92.95.64:9981/serf/query/hoko
 * Content type: `application/json`
 * Secret: Your secret key
 
@@ -157,7 +157,7 @@ Here is an overview for this section.
        github
          |
          v
-       :3000
+       :9981
      hoko-master                           hoko-slave
      54.92.127.130                         54.92.118.98
                      :7946 <----> :7946
@@ -174,7 +174,7 @@ hoko-master    54.92.127.130
 hoko-slave     54.92.118.98
 ```
 
-Open a few ports, 22, 3000, 7946
+Open a few ports, 22, 9981, 7946
 
 
 In 54.92.127.130, run hoko with a secret token which `secret.txt has`.
@@ -192,7 +192,7 @@ $ ./serf agent \
     -join 54.92.127.130
 ```
 
-In the setting of webhook, Set Payload URL: `http://54.92.127.130:3000/serf/query/hoko`
+In the setting of webhook, Set Payload URL: `http://54.92.127.130:9981/serf/query/hoko`
 
 OK, probably you are ready, just in case, type next in 54.92.118.98:
 
