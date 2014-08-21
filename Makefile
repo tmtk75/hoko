@@ -1,3 +1,4 @@
+version=0.1.2
 #
 #
 #
@@ -78,7 +79,7 @@ gox:
 	gox -os="linux darwin" -arch=amd64 -output "pkg/dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 release:
-	ghr -u tmtk75 v0.1.1 pkg/dist/hoko_linux_amd64.zip
+	ghr -u tmtk75 v$(version) pkg/dist/hoko_linux_amd64.zip
 
 zip: pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko_darwin_amd64.zip
 
