@@ -19,7 +19,9 @@ import (
 	"github.com/hashicorp/serf/command"
 	"github.com/hashicorp/serf/command/agent"
 	"github.com/martini-contrib/render"
+
 	mcli "github.com/mitchellh/cli"
+	"github.com/mitchellh/osext"
 )
 
 const (
@@ -127,6 +129,9 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 			return
 		}
 	}
+
+	filename, _ := osext.Executable()
+	os.Setenv("HOKO_PATH", filename)
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
