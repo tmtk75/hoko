@@ -132,7 +132,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 	ui := &mcli.BasicUi{Writer: &buf}
 	c := make(chan struct{})
 	q := command.QueryCommand{c, ui}
-	args := []string{"-tag", "webhook=.*", "-format", "json"}
+	args := []string{"-format", "json"}
 	args = append(args, buildArgs(req.URL.Query())...)
 	args = append(args, []string{params["name"], string(payload)}...)
 	status := q.Run(args)
