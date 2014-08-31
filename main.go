@@ -21,7 +21,6 @@ import (
 	"github.com/martini-contrib/render"
 
 	mcli "github.com/mitchellh/cli"
-	"github.com/mitchellh/osext"
 )
 
 const (
@@ -81,7 +80,15 @@ func main() {
 	app.Version = "0.1.3"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
+
 	os.Setenv("PORT", "9981")
+	os.Setenv("HOKO_PATH", os.Args[0])
+	os.Setenv("HOKO_VERSION", app.Version)
+	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
+	cwd, _ := os.Getwd()
+	log.Printf("version: %v", app.Version)
+	log.Printf("cwd: %v", cwd)
+
 	app.Run(os.Args)
 }
 
@@ -129,10 +136,6 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 			return
 		}
 	}
-
-	filename, _ := osext.Executable()
-	os.Setenv("HOKO_PATH", filename)
-	os.Setenv("HOKO_VERSION", ctx.App.Version)
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
