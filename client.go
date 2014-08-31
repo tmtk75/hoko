@@ -36,7 +36,7 @@ func PostRequest() {
 
 	sign := fmt.Sprintf("sha1=%s", hex.EncodeToString(actual))
 
-	req, err := http.NewRequest("POST", "http://localhost:9981/serf/query/hoko", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", "http://localhost:9981/serf/query/hoko?webhook=github", bytes.NewReader(body))
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

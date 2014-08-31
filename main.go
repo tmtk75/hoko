@@ -19,7 +19,9 @@ import (
 	"github.com/hashicorp/serf/command"
 	"github.com/hashicorp/serf/command/agent"
 	"github.com/martini-contrib/render"
+
 	mcli "github.com/mitchellh/cli"
+	"github.com/mitchellh/osext"
 )
 
 const (
@@ -76,7 +78,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.1.2"
+	app.Version = "0.1.3"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 	os.Setenv("PORT", "9981")
@@ -128,11 +130,15 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		}
 	}
 
+	filename, _ := osext.Executable()
+	os.Setenv("HOKO_PATH", filename)
+	os.Setenv("HOKO_VERSION", ctx.App.Version)
+
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
 	c := make(chan struct{})
 	q := command.QueryCommand{c, ui}
-	args := []string{"-tag", "webhook=.*", "-format", "json"}
+	args := []string{"-format", "json"}
 	args = append(args, buildArgs(req.URL.Query())...)
 	args = append(args, []string{params["name"], string(payload)}...)
 	status := q.Run(args)
