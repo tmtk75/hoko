@@ -132,6 +132,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 
 	filename, _ := osext.Executable()
 	os.Setenv("HOKO_PATH", filename)
+	os.Setenv("HOKO_VERSION", ctx.App.Version)
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
