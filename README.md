@@ -13,8 +13,8 @@ Download a file, <https://raw.githubusercontent.com/tmtk75/hoko/master/handler/e
 
 Download a binary, unzip it.
 
-* [Linux amd64 v0.1.0](https://github.com/tmtk75/hoko/releases/download/v0.1.0/hoko_linux_amd64.zip)
-* [Darwin amd64 v0.1.0](https://github.com/tmtk75/hoko/releases/download/v0.1.0/hoko_darwin_amd64.zip)
+* [Linux amd64 v0.1.0](https://github.com/tmtk75/hoko/releases/download/v0.1.3/hoko_linux_amd64.zip)
+* [Darwin amd64 v0.1.0](https://github.com/tmtk75/hoko/releases/download/v0.1.3/hoko_darwin_amd64.zip)
 
 Then the expected layout is:
 
