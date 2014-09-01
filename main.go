@@ -67,9 +67,17 @@ var commands = []cli.Command{
 	{
 		Name:  "post",
 		Usage: "Post a request",
-		Flags: flags,
+		Description: `args: <url> < <request-body>
+
+   e.g)
+     http://localhost:9981/serf/query/hoko?webhook=github < reqbody.json
+`,
 		Action: func(c *cli.Context) {
-			PostRequest()
+			if len(c.Args()) < 1 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				os.Exit(1)
+			}
+			PostRequest(c.Args()[0])
 		},
 	},
 }
