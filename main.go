@@ -112,7 +112,7 @@ func Run(ctx *cli.Context) {
 	}
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/serf/query/:name", func(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
+	m.Post("/serf/:event/:name", func(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
 		ExecSerf(ctx, r, req, params, w)
 	})
 
@@ -158,12 +158,25 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
-	c := make(chan struct{})
-	q := command.QueryCommand{c, ui}
-	args := []string{"-format", "json"}
-	args = append(args, buildArgs(req.URL.Query())...)
-	args = append(args, []string{params["name"], string(payload)}...)
-	status := q.Run(args)
+	var status int
+
+	switch params["event"] {
+	case "query":
+		c := make(chan struct{})
+		q := command.QueryCommand{c, ui}
+		args := []string{"-format", "json"}
+		args = append(args, buildArgs(req.URL.Query())...)
+		args = append(args, []string{params["name"], string(payload)}...)
+		status = q.Run(args)
+	case "event":
+		q := command.EventCommand{ui}
+		args := []string{params["name"], string(payload)}
+		log.Printf("args: %v", args)
+		status = q.Run(args)
+	default:
+		log.Printf("[WARN] unknown %v", params["event"])
+		status = 1
+	}
 
 	if status == 1 {
 		log.Printf("status: %v", status)
