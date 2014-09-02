@@ -16,7 +16,11 @@ import (
 	"os"
 )
 
-func PostRequest() {
+type GithubWebhookOptions struct {
+	GithubEvent string
+}
+
+func PostRequest(url string, opts GithubWebhookOptions) {
 	secret := os.Getenv("SECRET_TOKEN")
 	if len(secret) == 0 {
 		log.Fatalf("SECRET_TOKEN is empty")
@@ -36,9 +40,13 @@ func PostRequest() {
 
 	sign := fmt.Sprintf("sha1=%s", hex.EncodeToString(actual))
 
-	req, err := http.NewRequest("POST", "http://localhost:9981/serf/query/hoko?webhook=github", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		log.Fatalf("%v", err)
+	}
+
+	if opts.GithubEvent != "" {
+		req.Header.Add("x-github-event", opts.GithubEvent)
 	}
 	req.Header.Add("x-hub-signature", sign)
 	client := &http.Client{}

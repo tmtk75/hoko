@@ -1,6 +1,3 @@
-version=0.1.3
-#
-#
 #
 run:
 	SECRET_TOKEN=`cat test/secret_token.txt` go run main.go client.go run -d
@@ -24,6 +21,11 @@ post:
 	echo '{"event":"custom"}' | \
 	  SECRET_TOKEN=`cat test/secret_token.txt` go run \
 	  main.go client.go post
+
+#
+#
+#
+build: gox zip
 
 #
 # ansible
@@ -78,8 +80,13 @@ launch-ec2-instance:
 gox:
 	gox -os="linux darwin" -arch=amd64 -output "pkg/dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
-release:
-	ghr -u tmtk75 v$(version) pkg/dist/hoko_linux_amd64.zip
+hoko: main.go client.go
+	go build
+
+version=`./hoko -v | sed 's/hoko version //g'`
+
+release: hoko
+	echo ghr -u tmtk75 v$(version) pkg/dist/hoko_linux_amd64.zip
 
 zip: pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko_darwin_amd64.zip
 
@@ -90,7 +97,9 @@ pkg/dist/hoko_darwin_amd64.zip: pkg/dist/hoko_darwin_amd64
 	cd pkg/dist; mv hoko_darwin_amd64 hoko; zip hoko_darwin_amd64.zip hoko
 
 clean:
-	rm *.zip hoko_*_amd64 ssh-config
+	rm -f ssh-config
+distclean: clean
+	rm -rf hoko pkg
 
 ##
 ssh-config:

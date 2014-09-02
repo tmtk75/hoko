@@ -67,9 +67,24 @@ var commands = []cli.Command{
 	{
 		Name:  "post",
 		Usage: "Post a request",
-		Flags: flags,
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: "github-event", Value: "", Usage: "Header value of x-github-event"},
+		},
+		Description: `args: <url> < <request-body>
+
+   e.g)
+     SECRET_TOKEN=... \
+     http://localhost:9981/serf/query/hoko?webhook=github < reqbody.json
+`,
 		Action: func(c *cli.Context) {
-			PostRequest()
+			if len(c.Args()) < 1 {
+				cli.ShowCommandHelp(c, c.Command.Name)
+				os.Exit(1)
+			}
+			opts := GithubWebhookOptions{
+				GithubEvent: c.String("github-event"),
+			}
+			PostRequest(c.Args()[0], opts)
 		},
 	},
 }
@@ -77,17 +92,13 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.1.3"
+	app.Version = "0.1.4"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
 	os.Setenv("PORT", "9981")
 	os.Setenv("HOKO_PATH", os.Args[0])
 	os.Setenv("HOKO_VERSION", app.Version)
-	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
-	cwd, _ := os.Getwd()
-	log.Printf("version: %v", app.Version)
-	log.Printf("cwd: %v", cwd)
 
 	app.Run(os.Args)
 }
@@ -136,6 +147,11 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 			return
 		}
 	}
+
+	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
+	cwd, _ := os.Getwd()
+	log.Printf("version: %v", ctx.App.Version)
+	log.Printf("cwd: %v", cwd)
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
