@@ -133,6 +133,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 	}
 
 	body.Event = req.Header.Get("x-github-event")
+	body.Delivery = req.Header.Get("x-github-delivery")
 	payload, err := json.Marshal(&body)
 	if err != nil {
 		log.Printf("json.Marshal failed: %v", body)
@@ -207,10 +208,11 @@ func buildArgs(params map[string][]string) []string {
 }
 
 type WebhookBody struct {
-	Event       string                 `json:"event"`
-	Ref         string                 `json:"ref"`
-	After       string                 `json:"after"`
-	Before      string                 `json:"before"`
-	Head_commit map[string]interface{} `json:"head_commit,omitempty"`
-	Pusher      map[string]interface{} `json:"pusher,omitempty"`
+	Event    string `json:"event"`
+	Delivery string `json:"delivery"`
+	Ref      string `json:"ref"`
+	After    string `json:"after"`
+	Before   string `json:"before"`
+	//Head_commit map[string]interface{} `json:"head_commit,omitempty"`
+	//Pusher      map[string]interface{} `json:"pusher,omitempty"`
 }
