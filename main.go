@@ -73,6 +73,7 @@ var commands = []cli.Command{
 		Description: `args: <url> < <request-body>
 
    e.g)
+     SECRET_TOKEN=... \
      http://localhost:9981/serf/query/hoko?webhook=github < reqbody.json
 `,
 		Action: func(c *cli.Context) {
@@ -98,10 +99,6 @@ func main() {
 	os.Setenv("PORT", "9981")
 	os.Setenv("HOKO_PATH", os.Args[0])
 	os.Setenv("HOKO_VERSION", app.Version)
-	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
-	cwd, _ := os.Getwd()
-	log.Printf("version: %v", app.Version)
-	log.Printf("cwd: %v", cwd)
 
 	app.Run(os.Args)
 }
@@ -150,6 +147,11 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 			return
 		}
 	}
+
+	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
+	cwd, _ := os.Getwd()
+	log.Printf("version: %v", ctx.App.Version)
+	log.Printf("cwd: %v", cwd)
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
