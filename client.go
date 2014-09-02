@@ -17,7 +17,8 @@ import (
 )
 
 type GithubWebhookOptions struct {
-	GithubEvent string
+	GithubEvent    string
+	GithubDelivery string
 }
 
 func PostRequest(url string, opts GithubWebhookOptions) {
@@ -47,6 +48,9 @@ func PostRequest(url string, opts GithubWebhookOptions) {
 
 	if opts.GithubEvent != "" {
 		req.Header.Add("x-github-event", opts.GithubEvent)
+	}
+	if opts.GithubDelivery != "" {
+		req.Header.Add("x-github-delivery", opts.GithubDelivery)
 	}
 	req.Header.Add("x-hub-signature", sign)
 	client := &http.Client{}

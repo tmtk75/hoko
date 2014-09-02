@@ -69,6 +69,7 @@ var commands = []cli.Command{
 		Usage: "Post a request",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "github-event", Value: "", Usage: "Header value of x-github-event"},
+			cli.StringFlag{Name: "github-delivery", Value: "", Usage: "Header value of x-github-delivery"},
 		},
 		Description: `args: <url> < <request-body>
 
@@ -82,7 +83,8 @@ var commands = []cli.Command{
 				os.Exit(1)
 			}
 			opts := GithubWebhookOptions{
-				GithubEvent: c.String("github-event"),
+				GithubEvent:    c.String("github-event"),
+				GithubDelivery: c.String("github-delivery"),
 			}
 			PostRequest(c.Args()[0], opts)
 		},
