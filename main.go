@@ -116,7 +116,15 @@ func Run(ctx *cli.Context) {
 		ExecSerf(ctx, r, req, params, w)
 	})
 
+	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
+	cwd, _ := os.Getwd()
+	log.Printf("version: %v", ctx.App.Version)
+	log.Printf("cwd: %v", cwd)
 	m.Run()
+}
+
+type SerfCmd interface {
+	Run(args []string) int
 }
 
 func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
@@ -151,33 +159,29 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		}
 	}
 
-	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
-	cwd, _ := os.Getwd()
-	log.Printf("version: %v", ctx.App.Version)
-	log.Printf("cwd: %v", cwd)
-
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
-	var status int
+	var cmd SerfCmd
+	var args []string
 
 	switch params["event"] {
 	case "query":
 		c := make(chan struct{})
-		q := command.QueryCommand{c, ui}
-		args := []string{"-format", "json"}
-		args = append(args, buildArgs(req.URL.Query())...)
+		cmd = &command.QueryCommand{c, ui}
+		args = []string{"-format", "json"}
+		args = append(args, buildTagOptions(req.URL.Query())...)
 		args = append(args, []string{params["name"], string(payload)}...)
-		status = q.Run(args)
 	case "event":
-		q := command.EventCommand{ui}
-		args := []string{params["name"], string(payload)}
-		log.Printf("args: %v", args)
-		status = q.Run(args)
+		cmd = &command.EventCommand{ui}
+		args = []string{params["name"], string(payload)}
 	default:
 		log.Printf("[WARN] unknown %v", params["event"])
-		status = 1
+		r.Error(400)
+		return
 	}
 
+	log.Printf("args: %v", args)
+	status := cmd.Run(args)
 	if status == 1 {
 		log.Printf("status: %v", status)
 		r.Data(500, buf.Bytes())
@@ -211,7 +215,7 @@ func verify(sign string, b []byte, r render.Render, w http.ResponseWriter) error
 	return nil
 }
 
-func buildArgs(params map[string][]string) []string {
+func buildTagOptions(params map[string][]string) []string {
 	a := make([]string, len(params)*2)
 	i := 0
 	for k, v := range params {
