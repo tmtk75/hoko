@@ -14,7 +14,7 @@ Download a file, <https://raw.githubusercontent.com/tmtk75/hoko/master/handler/e
 
 Download a binary, unzip it.
 
-* [Linux amd64 v0.2.0](https://github.com/tmtk75/hoko/releases/download/v0.2.0/hoko_linux_amd64.zip)
+* [Linux amd64 v0.2.3](https://github.com/tmtk75/hoko/releases/download/v0.2.3/hoko-0.2.3_linux_amd64.zip)
 
 Then the expected layout is:
 
