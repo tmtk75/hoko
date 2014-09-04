@@ -95,7 +95,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.2.2"
+	app.Version = "0.2.3"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
@@ -243,10 +243,10 @@ type WebhookBody struct {
 	Event    string `json:"event"`
 	Delivery string `json:"delivery"`
 	Ref      string `json:"ref"`
-	After    string `json:"after"`
-	Before   string `json:"before"`
-	Created  bool   `json:"created"`
-	Deleted  bool   `json:"deleted"`
+	//After    string `json:"after"`
+	//Before   string `json:"before"`
+	Created bool `json:"created"`
+	Deleted bool `json:"deleted"`
 	//Head_commit map[string]interface{} `json:"head_commit,omitempty"`
 	//Pusher      map[string]interface{} `json:"pusher,omitempty"`
 }
