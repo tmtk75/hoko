@@ -94,7 +94,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.1.5"
+	app.Version = "0.2.0"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
@@ -112,11 +112,19 @@ func Run(ctx *cli.Context) {
 	}
 	m := martini.Classic()
 	m.Use(render.Renderer())
-	m.Post("/serf/query/:name", func(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
+	m.Post("/serf/:event/:name", func(r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
 		ExecSerf(ctx, r, req, params, w)
 	})
 
+	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
+	cwd, _ := os.Getwd()
+	log.Printf("version: %v", ctx.App.Version)
+	log.Printf("cwd: %v", cwd)
 	m.Run()
+}
+
+type SerfCmd interface {
+	Run(args []string) int
 }
 
 func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
@@ -151,20 +159,29 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		}
 	}
 
-	//log.Printf("HOKO_PATH: %v", os.Getenv("HOKO_PATH"))
-	cwd, _ := os.Getwd()
-	log.Printf("version: %v", ctx.App.Version)
-	log.Printf("cwd: %v", cwd)
-
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
-	c := make(chan struct{})
-	q := command.QueryCommand{c, ui}
-	args := []string{"-format", "json"}
-	args = append(args, buildArgs(req.URL.Query())...)
-	args = append(args, []string{params["name"], string(payload)}...)
-	status := q.Run(args)
+	var cmd SerfCmd
+	var args []string
 
+	switch params["event"] {
+	case "query":
+		c := make(chan struct{})
+		cmd = &command.QueryCommand{c, ui}
+		args = []string{"-format", "json"}
+		args = append(args, buildTagOptions(req.URL.Query())...)
+		args = append(args, []string{params["name"], string(payload)}...)
+	case "event":
+		cmd = &command.EventCommand{ui}
+		args = []string{params["name"], string(payload)}
+	default:
+		log.Printf("[WARN] unknown %v", params["event"])
+		r.Error(400)
+		return
+	}
+
+	log.Printf("args: %v", args)
+	status := cmd.Run(args)
 	if status == 1 {
 		log.Printf("status: %v", status)
 		r.Data(500, buf.Bytes())
@@ -198,7 +215,7 @@ func verify(sign string, b []byte, r render.Render, w http.ResponseWriter) error
 	return nil
 }
 
-func buildArgs(params map[string][]string) []string {
+func buildTagOptions(params map[string][]string) []string {
 	a := make([]string, len(params)*2)
 	i := 0
 	for k, v := range params {

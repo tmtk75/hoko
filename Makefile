@@ -22,10 +22,17 @@ post:
 	  SECRET_TOKEN=`cat test/secret_token.txt` go run \
 	  main.go client.go post
 
+query:
+	curl -v -XPOST localhost:9981/serf/query/hoko -d '{"ref":"fizbiz"}'
+event:
+	curl -v -XPOST localhost:9981/serf/event/webhook -d '{"ref":"foobar"}'
+
 #
 #
 #
-build: gox zip
+build: gox zip shasum
+shasum:
+	shasum -a 256 pkg/dist/hoko_linux_amd64.zip
 
 #
 # ansible

@@ -1,11 +1,12 @@
 # hoko
 
-A HTTP server for github webhook with serf agent, which provides HTTP interface to serf agent for query. The main purpose is to propagate webhook events to serf cluster. Any hosts can receive webhook events anywhere if the hosts join the serf cluster.
+A HTTP server for github webhook with serf agent, which provides HTTP interface to serf agent for query and event.
+The main purpose is to propagate webhook events to serf cluster. Any hosts can receive webhook events anywhere if the hosts join the serf cluster.
 
 <img src='http://tmtk75.github.com.s3.amazonaws.com/hoko/demo.gif'/>
 
 
-## Getting Started
+## Getting Started in 3 minutes
 
 Download a configuration file, <https://raw.githubusercontent.com/tmtk75/hoko/master/serf.conf> and save as `serf.conf`.
 
@@ -13,8 +14,7 @@ Download a file, <https://raw.githubusercontent.com/tmtk75/hoko/master/handler/e
 
 Download a binary, unzip it.
 
-* [Linux amd64 v0.1.4](https://github.com/tmtk75/hoko/releases/download/v0.1.4/hoko_linux_amd64.zip)
-* [Darwin amd64 v0.1.4](https://github.com/tmtk75/hoko/releases/download/v0.1.4/hoko_darwin_amd64.zip)
+* [Linux amd64 v0.2.0](https://github.com/tmtk75/hoko/releases/download/v0.2.0/hoko_linux_amd64.zip)
 
 Then the expected layout is:
 
@@ -66,9 +66,9 @@ curl -XPOST localhost:9981/serf/query/hoko -d '{}'
 ```
 
 For example, this request makes hoko to invoke the next command.
-	
+
 ```
-$ serf query -tag webhook=.* hoko "{}"
+$ serf query -tag webhook=github hoko "{}"
 ```
 
 In order to handle this query event, it needs a setting about tag and serf event-handler option like
@@ -82,20 +82,22 @@ The previous response is built by `handler/echo.sh` at default via serf query. A
 ```
 {
   "tags": {
-    "webhook": ".*"
+    "webhook": "github"
   },
   "event_handlers": [
-    "query:hoko=./handler/echo.sh"
+    "query:hoko=./handler/echo.sh",
+    "user:webhook=./handler/cat-payload.sh"
   ]
 }
 ```
 
 hoko responds stdout from serf agent as HTTP response.
 
-Next diagram briefly describes typical flow of hoko.
+Next diagram briefly describes typical flow of hoko for `query` command.
+Regarding `event` it's simpler.
 
 ```
- [curl]      [hoko]     
+ [curl]      [hoko]
    |            |
    |            |------>> [serf agent]  (This agent is launched by hoko)
    |    POST    |              |
@@ -108,7 +110,7 @@ Next diagram briefly describes typical flow of hoko.
    |            |-----,        |
    |            |     |------->|
    |            |     |        |  exec echo.sh
-   |            |     |        |-----, 
+   |            |     |        |-----,
    |            |     |        |     |
    |            |     |        |<----'         [other agents]
    |            |     |        | propagate           |
@@ -234,4 +236,3 @@ serf: <https://github.com/hashicorp/serf>
 ## License
 
 [MIT License](http://opensource.org/licenses/MIT)
-
