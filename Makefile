@@ -94,7 +94,8 @@ hoko: main.go client.go
 version=`./hoko -v | sed 's/hoko version //g'`
 
 release: hoko
-	ghr -u tmtk75 v$(version) pkg/dist/hoko_linux_amd64.zip
+	cp -f pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko-$(version)_linux_amd64.zip 
+	ghr -u tmtk75 v$(version) pkg/dist/hoko-$(version)_linux_amd64.zip
 
 zip: pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko_darwin_amd64.zip
 
