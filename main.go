@@ -31,6 +31,7 @@ const (
 var flags = []cli.Flag{
 	cli.StringFlag{Name: "config-file", Value: "./serf.conf", Usage: "Path to serf.conf", EnvVar: "HOKO_CONFIG_FILE"},
 	cli.BoolFlag{Name: "debug,d", Usage: "Debug mode not to verify x-hub-signature", EnvVar: "HOKO_DEBUG"},
+	cli.BoolFlag{Name: "ignore-deleted", Usage: "Ignore delivers for deleted", EnvVar: "HOKO_IGNORE_DELETED"},
 }
 
 var commands = []cli.Command{
@@ -144,6 +145,15 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 
 	body.Event = req.Header.Get("x-github-event")
 	body.Delivery = req.Header.Get("x-github-delivery")
+	if ctx.Bool("ignore-deleted") && body.Deleted {
+		log.Printf("ignore deleted")
+		log.Printf("x-github-event: %v", body.Event)
+		log.Printf("x-github-delivery: %v", body.Delivery)
+		r.Header().Add("content-type", "text/plain")
+		r.Data(200, []byte("ignore deleted\n"))
+		return
+	}
+
 	payload, err := json.Marshal(&body)
 	if err != nil {
 		log.Printf("json.Marshal failed: %v", body)
