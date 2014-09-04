@@ -30,7 +30,9 @@ event:
 #
 #
 #
-build: gox zip
+build: gox zip shasum
+shasum:
+	shasum -a 256 pkg/dist/hoko_linux_amd64.zip
 
 #
 # ansible
