@@ -18,7 +18,6 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/hashicorp/serf/command"
 	"github.com/hashicorp/serf/command/agent"
-	"github.com/hashicorp/serf/serf"
 	"github.com/martini-contrib/render"
 
 	mcli "github.com/mitchellh/cli"
@@ -161,7 +160,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		r.Error(500)
 		return
 	}
-	log.Printf("payload-size: %v (max: %v)", len(payload), serf.UserEventSizeLimit)
+	log.Printf("payload-size: %v", len(payload))
 
 	if !ctx.Bool("d") {
 		sign := req.Header.Get("x-hub-signature")
