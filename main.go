@@ -160,6 +160,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		r.Error(500)
 		return
 	}
+	log.Printf("payload-size: %v", len(payload))
 
 	if !ctx.Bool("d") {
 		sign := req.Header.Get("x-hub-signature")
