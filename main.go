@@ -239,7 +239,10 @@ func buildTagOptions(params map[string][]string) []string {
 
 type WebhookBody struct {
 	Repository struct {
-		Name string `json:"name"`
+		Name  string `json:"name"`
+		Owner struct {
+			Name string `json:"name"`
+		} `json:owner`
 	} `json:"repository"`
 	Event    string `json:"event"`
 	Delivery string `json:"delivery"`
