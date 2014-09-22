@@ -95,7 +95,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.2.5"
+	app.Version = "0.2.6"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
@@ -242,7 +242,7 @@ type WebhookBody struct {
 		Name  string `json:"name"`
 		Owner struct {
 			Name string `json:"name"`
-		} `json:owner`
+		} `json:"owner"`
 	} `json:"repository"`
 	Event    string `json:"event"`
 	Delivery string `json:"delivery"`
