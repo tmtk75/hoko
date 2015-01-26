@@ -15,6 +15,12 @@ sample:
 	  localhost:9981/serf/query/hoko \
 	  -d @test/webhook-body.json 
 
+bb-sample:
+	curl -v -XPOST \
+	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
+	  localhost:9981/serf/query/hoko \
+	  -d @test/bitbucket-webhook-body.json 
+
 hup:
 	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
 
