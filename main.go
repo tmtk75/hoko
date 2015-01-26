@@ -26,6 +26,9 @@ import (
 const (
 	ENV_SECRET_TOKEN = "SECRET_TOKEN"
 	CONFIG_PATH      = "CONFIG_PATH"
+	HOKO_VERSION     = "HOKO_VERSION"
+	HOKO_PATH        = "HOKO_PATH"
+	HOKO_ORIGIN      = "HOKO_ORIGIN"
 )
 
 var flags = []cli.Flag{
@@ -101,8 +104,8 @@ func main() {
 	app.Commands = commands
 
 	os.Setenv("PORT", "9981")
-	os.Setenv("HOKO_PATH", os.Args[0])
-	os.Setenv("HOKO_VERSION", app.Version)
+	os.Setenv(HOKO_PATH, os.Args[0])
+	os.Setenv(HOKO_VERSION, app.Version)
 
 	app.Run(os.Args)
 }
@@ -198,8 +201,10 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 	origin := req.URL.Query().Get("origin")
 	log.Printf("origin: %v\n", origin)
 	if origin == "bitbucket" {
+		os.Setenv(HOKO_ORIGIN, "bitbucket")
 		v = unmarshalBitbucket(b, ctx, r, req, w)
 	} else {
+		os.Setenv(HOKO_ORIGIN, "github")
 		v = unmarshalGithub(b, ctx, r, req, w)
 	}
 	if v == nil {

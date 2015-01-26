@@ -17,7 +17,7 @@ sample:
 
 bb-sample:
 	curl -v -XPOST \
-	  "localhost:9981/serf/query/hoko?origin=bitbucket&secret=`cat test/secret_token.txt`" \
+	  "localhost:9981/serf/event/bitbucket?origin=bitbucket&secret=`cat test/secret_token.txt`" \
 	  -d @test/bitbucket-webhook-body.json 
 
 hup:
