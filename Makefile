@@ -1,7 +1,7 @@
 #
 run:
 	SECRET_TOKEN=`cat test/secret_token.txt` \
-		go run main.go client.go run --ignore-deleted --disable-tag
+		go run main.go client.go run --ignore-deleted
 
 tags:
 	serf tags -set webhook=push

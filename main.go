@@ -32,7 +32,7 @@ var flags = []cli.Flag{
 	cli.StringFlag{Name: "config-file", Value: "./serf.conf", Usage: "Path to serf.conf", EnvVar: "HOKO_CONFIG_FILE"},
 	cli.BoolFlag{Name: "debug,d", Usage: "Debug mode not to verify x-hub-signature", EnvVar: "HOKO_DEBUG"},
 	cli.BoolFlag{Name: "ignore-deleted", Usage: "Ignore delivers for deleted", EnvVar: "HOKO_IGNORE_DELETED"},
-	cli.BoolFlag{Name: "disable-tag", Usage: "Disable query params as tag"},
+	cli.BoolFlag{Name: "enable-tag", Usage: "Enable query params as tag"},
 }
 
 var commands = []cli.Command{
@@ -225,7 +225,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		c := make(chan struct{})
 		cmd = &command.QueryCommand{c, ui}
 		args = []string{"-format", "json"}
-		if !ctx.Bool("disable-tag") {
+		if ctx.Bool("enable-tag") {
 			args = append(args, buildTagOptions(req.URL.Query())...)
 		}
 		args = append(args, []string{params["name"], string(payload)}...)
