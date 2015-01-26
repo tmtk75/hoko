@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -173,15 +174,29 @@ func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.R
 		}
 	}
 
+	var payload string
+	if m, err := url.ParseQuery(string(b)); err != nil {
+		log.Printf("ParseQuery failed: %v", string(b))
+		r.Error(400)
+		return nil
+	} else {
+		if len(m["payload"]) == 0 {
+			log.Printf("payload is missing: %v", string(b))
+			r.Error(400)
+			return nil
+		}
+		payload = m["payload"][0]
+	}
+
 	var body BitbucketWebhookBody
-	if err := json.Unmarshal(b, &body); err != nil {
-		log.Printf("json.Unmarshal failed: %v", string(b))
+	if err := json.Unmarshal([]byte(payload), &body); err != nil {
+		log.Printf("json.Unmarshal failed: %v", payload)
 		r.Error(400)
 		return nil
 	}
 
 	if len(body.Commits) == 0 {
-		log.Printf("commits is empty: %v", string(b))
+		log.Printf("commits is empty: %v", body)
 		r.Error(400)
 		return nil
 	}

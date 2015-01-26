@@ -17,8 +17,9 @@ sample:
 
 bb-sample:
 	curl -v -XPOST \
+	  -H"content-type: application/x-www-form-urlencoded" \
 	  "localhost:9981/serf/event/bitbucket?origin=bitbucket&secret=`cat test/secret_token.txt`" \
-	  -d @test/bitbucket-webhook-body.json 
+	  -d @test/bitbucket-webhook-body
 
 hup:
 	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
