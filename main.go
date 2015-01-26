@@ -143,7 +143,7 @@ func unmarshalGithub(b []byte, ctx *cli.Context, r render.Render, req *http.Requ
 
 	var body WebhookBody
 	if err := json.Unmarshal(b, &body); err != nil {
-		log.Printf("json.Unmarshal failed: %v", b)
+		log.Printf("json.Unmarshal failed: %v", string(b))
 		r.Error(400)
 		return nil
 	}
@@ -175,7 +175,7 @@ func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.R
 
 	var body BitbucketWebhookBody
 	if err := json.Unmarshal(b, &body); err != nil {
-		log.Printf("json.Unmarshal failed: %v", b)
+		log.Printf("json.Unmarshal failed: %v", string(b))
 		r.Error(400)
 		return nil
 	}
