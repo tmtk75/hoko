@@ -32,6 +32,7 @@ var flags = []cli.Flag{
 	cli.StringFlag{Name: "config-file", Value: "./serf.conf", Usage: "Path to serf.conf", EnvVar: "HOKO_CONFIG_FILE"},
 	cli.BoolFlag{Name: "debug,d", Usage: "Debug mode not to verify x-hub-signature", EnvVar: "HOKO_DEBUG"},
 	cli.BoolFlag{Name: "ignore-deleted", Usage: "Ignore delivers for deleted", EnvVar: "HOKO_IGNORE_DELETED"},
+	cli.BoolFlag{Name: "disable-tag", Usage: "Disable query params as tag"},
 }
 
 var commands = []cli.Command{
@@ -128,19 +129,20 @@ type SerfCmd interface {
 	Run(args []string) int
 }
 
-func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
-	b, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Printf("ioutil.ReadAll failed: %v", req.Body)
-		r.Error(400)
-		return
+func unmarshalGithub(b []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
+	if !ctx.Bool("d") {
+		sign := req.Header.Get("x-hub-signature")
+		err := verify(sign, b, r, w)
+		if err != nil {
+			return nil
+		}
 	}
 
 	var body WebhookBody
 	if err := json.Unmarshal(b, &body); err != nil {
 		log.Printf("json.Unmarshal failed: %v", b)
 		r.Error(400)
-		return
+		return nil
 	}
 
 	body.Event = req.Header.Get("x-github-event")
@@ -151,24 +153,67 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		log.Printf("x-github-delivery: %v", body.Delivery)
 		r.Header().Add("content-type", "text/plain")
 		r.Data(200, []byte("ignore deleted\n"))
+		return nil
+	}
+
+	return &body
+}
+
+func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
+	if !ctx.Bool("d") {
+		token := os.Getenv(ENV_SECRET_TOKEN)
+		secret := req.URL.Query().Get("secret")
+		if token != secret {
+			log.Printf("secret token didn't match")
+			r.Error(400)
+			return nil
+		}
+	}
+
+	var body BitbucketWebhookBody
+	if err := json.Unmarshal(b, &body); err != nil {
+		log.Printf("json.Unmarshal failed: %v", b)
+		r.Error(400)
+		return nil
+	}
+
+	if len(body.Commits) == 0 {
+		log.Printf("commits is empty: %v", string(b))
+		r.Error(400)
+		return nil
+	}
+
+	return &body
+}
+
+func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("ioutil.ReadAll failed: %v", req.Body)
+		r.Error(400)
 		return
 	}
 
-	payload, err := json.Marshal(&body)
+	var v interface{}
+	origin := req.URL.Query().Get("origin")
+	log.Printf("origin: %v\n", origin)
+	if origin == "bitbucket" {
+		v = unmarshalBitbucket(b, ctx, r, req, w)
+	} else {
+		v = unmarshalGithub(b, ctx, r, req, w)
+	}
+	if v == nil {
+		return
+	}
+
+	payload, err := json.Marshal(v)
 	if err != nil {
-		log.Printf("json.Marshal failed: %v", body)
+		log.Printf("json.Marshal failed: %v", v)
 		r.Error(500)
 		return
 	}
-	log.Printf("payload-size: %v", len(payload))
 
-	if !ctx.Bool("d") {
-		sign := req.Header.Get("x-hub-signature")
-		err := verify(sign, b, r, w)
-		if err != nil {
-			return
-		}
-	}
+	log.Printf("payload-size: %v", len(payload))
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
@@ -180,7 +225,9 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		c := make(chan struct{})
 		cmd = &command.QueryCommand{c, ui}
 		args = []string{"-format", "json"}
-		args = append(args, buildTagOptions(req.URL.Query())...)
+		if !ctx.Bool("disable-tag") {
+			args = append(args, buildTagOptions(req.URL.Query())...)
+		}
 		args = append(args, []string{params["name"], string(payload)}...)
 	case "event":
 		cmd = &command.EventCommand{ui}
@@ -255,4 +302,17 @@ type WebhookBody struct {
 	Pusher struct {
 		Name string `json:"name"`
 	} `json:"pusher,omitempty"`
+}
+
+type BitbucketWebhookBody struct {
+	CanonRul string `json:"canon_url"`
+	Commits  []struct {
+		Author  string `json:"author"`
+		Branch  string `json:"branch"`
+		RawNode string `json:"raw_node"`
+	} `json:"commits"`
+	Repository struct {
+		AbsoluteUrl string `json:"absolute_url"`
+	} `json:"repository"`
+	User string `json:"user"`
 }

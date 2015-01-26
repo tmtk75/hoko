@@ -1,7 +1,7 @@
 #
 run:
 	SECRET_TOKEN=`cat test/secret_token.txt` \
-		go run main.go client.go run -d --ignore-deleted
+		go run main.go client.go run --ignore-deleted --disable-tag
 
 tags:
 	serf tags -set webhook=push
@@ -17,8 +17,7 @@ sample:
 
 bb-sample:
 	curl -v -XPOST \
-	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
-	  localhost:9981/serf/query/hoko \
+	  "localhost:9981/serf/query/hoko?origin=bitbucket&secret=`cat test/secret_token.txt`" \
 	  -d @test/bitbucket-webhook-body.json 
 
 hup:
