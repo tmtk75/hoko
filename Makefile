@@ -1,7 +1,7 @@
 #
 run:
 	SECRET_TOKEN=`cat test/secret_token.txt` \
-		go run main.go client.go run -d --ignore-deleted
+		go run main.go client.go run --ignore-deleted
 
 tags:
 	serf tags -set webhook=push
@@ -14,6 +14,12 @@ sample:
 	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
 	  localhost:9981/serf/query/hoko \
 	  -d @test/webhook-body.json 
+
+bb-sample:
+	curl -v -XPOST \
+	  -H"content-type: application/x-www-form-urlencoded" \
+	  "localhost:9981/serf/event/bitbucket?origin=bitbucket&secret=`cat test/secret_token.txt`" \
+	  -d @test/bitbucket-webhook-body
 
 hup:
 	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`

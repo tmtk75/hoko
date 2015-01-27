@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -26,12 +27,16 @@ import (
 const (
 	ENV_SECRET_TOKEN = "SECRET_TOKEN"
 	CONFIG_PATH      = "CONFIG_PATH"
+	HOKO_VERSION     = "HOKO_VERSION"
+	HOKO_PATH        = "HOKO_PATH"
+	HOKO_ORIGIN      = "HOKO_ORIGIN"
 )
 
 var flags = []cli.Flag{
 	cli.StringFlag{Name: "config-file", Value: "./serf.conf", Usage: "Path to serf.conf", EnvVar: "HOKO_CONFIG_FILE"},
 	cli.BoolFlag{Name: "debug,d", Usage: "Debug mode not to verify x-hub-signature", EnvVar: "HOKO_DEBUG"},
 	cli.BoolFlag{Name: "ignore-deleted", Usage: "Ignore delivers for deleted", EnvVar: "HOKO_IGNORE_DELETED"},
+	cli.BoolFlag{Name: "enable-tag", Usage: "Enable query params as tag"},
 }
 
 var commands = []cli.Command{
@@ -95,13 +100,13 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.2.6"
+	app.Version = "0.3.0"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
 	os.Setenv("PORT", "9981")
-	os.Setenv("HOKO_PATH", os.Args[0])
-	os.Setenv("HOKO_VERSION", app.Version)
+	os.Setenv(HOKO_PATH, os.Args[0])
+	os.Setenv(HOKO_VERSION, app.Version)
 
 	app.Run(os.Args)
 }
@@ -128,19 +133,20 @@ type SerfCmd interface {
 	Run(args []string) int
 }
 
-func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
-	b, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Printf("ioutil.ReadAll failed: %v", req.Body)
-		r.Error(400)
-		return
+func unmarshalGithub(b []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
+	if !ctx.Bool("d") {
+		sign := req.Header.Get("x-hub-signature")
+		err := verify(sign, b, r, w)
+		if err != nil {
+			return nil
+		}
 	}
 
 	var body WebhookBody
 	if err := json.Unmarshal(b, &body); err != nil {
-		log.Printf("json.Unmarshal failed: %v", b)
+		log.Printf("json.Unmarshal failed: %v", string(b))
 		r.Error(400)
-		return
+		return nil
 	}
 
 	body.Event = req.Header.Get("x-github-event")
@@ -151,24 +157,87 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		log.Printf("x-github-delivery: %v", body.Delivery)
 		r.Header().Add("content-type", "text/plain")
 		r.Data(200, []byte("ignore deleted\n"))
+		return nil
+	}
+
+	return &body
+}
+
+func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
+	if !ctx.Bool("d") {
+		token := os.Getenv(ENV_SECRET_TOKEN)
+		secret := req.URL.Query().Get("secret")
+		if token != secret {
+			log.Printf("secret token didn't match")
+			r.Error(400)
+			return nil
+		}
+	}
+
+	var payload string
+	if m, err := url.ParseQuery(string(b)); err != nil {
+		log.Printf("ParseQuery failed: %v", string(b))
+		r.Error(400)
+		return nil
+	} else {
+		if len(m["payload"]) == 0 {
+			log.Printf("payload is missing: %v", string(b))
+			r.Error(400)
+			return nil
+		}
+		payload = m["payload"][0]
+	}
+
+	var body BitbucketWebhookBody
+	if err := json.Unmarshal([]byte(payload), &body); err != nil {
+		log.Printf("json.Unmarshal failed: %v", payload)
+		r.Error(400)
+		return nil
+	}
+
+	if len(body.Commits) == 0 {
+		log.Printf("commits is empty: %v", body)
+		r.Error(400)
+		return nil
+	}
+
+	return &body
+}
+
+func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("ioutil.ReadAll failed: %v", req.Body)
+		r.Error(400)
 		return
 	}
 
-	payload, err := json.Marshal(&body)
+	for k, v := range req.Header {
+		log.Printf("%v: %v", k, v)
+	}
+
+	var v interface{}
+	origin := req.URL.Query().Get("origin")
+	log.Printf("origin: %v\n", origin)
+	if origin == "bitbucket" {
+		os.Setenv(HOKO_ORIGIN, "bitbucket")
+		v = unmarshalBitbucket(b, ctx, r, req, w)
+	} else {
+		os.Setenv(HOKO_ORIGIN, "github")
+		v = unmarshalGithub(b, ctx, r, req, w)
+	}
+	if v == nil {
+		return
+	}
+
+	payload, err := json.Marshal(v)
 	if err != nil {
-		log.Printf("json.Marshal failed: %v", body)
+		log.Printf("json.Marshal failed: %v", v)
 		r.Error(500)
 		return
 	}
-	log.Printf("payload-size: %v", len(payload))
 
-	if !ctx.Bool("d") {
-		sign := req.Header.Get("x-hub-signature")
-		err := verify(sign, b, r, w)
-		if err != nil {
-			return
-		}
-	}
+	log.Printf("payload-size: %v", len(payload))
 
 	var buf bytes.Buffer
 	ui := &mcli.BasicUi{Writer: &buf}
@@ -180,7 +249,9 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		c := make(chan struct{})
 		cmd = &command.QueryCommand{c, ui}
 		args = []string{"-format", "json"}
-		args = append(args, buildTagOptions(req.URL.Query())...)
+		if ctx.Bool("enable-tag") {
+			args = append(args, buildTagOptions(req.URL.Query())...)
+		}
 		args = append(args, []string{params["name"], string(payload)}...)
 	case "event":
 		cmd = &command.EventCommand{ui}
@@ -255,4 +326,17 @@ type WebhookBody struct {
 	Pusher struct {
 		Name string `json:"name"`
 	} `json:"pusher,omitempty"`
+}
+
+type BitbucketWebhookBody struct {
+	CanonRul string `json:"canon_url"`
+	Commits  []struct {
+		Author  string `json:"author"`
+		Branch  string `json:"branch"`
+		RawNode string `json:"raw_node"`
+	} `json:"commits"`
+	Repository struct {
+		AbsoluteUrl string `json:"absolute_url"`
+	} `json:"repository"`
+	User string `json:"user"`
 }
