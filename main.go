@@ -212,6 +212,10 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		return
 	}
 
+	for k, v := range req.Header {
+		log.Printf("%v: %v", k, v)
+	}
+
 	var v interface{}
 	origin := req.URL.Query().Get("origin")
 	log.Printf("origin: %v\n", origin)
