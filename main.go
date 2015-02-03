@@ -201,7 +201,23 @@ func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.R
 		return nil
 	}
 
+	if len(body.Commits) <= 2 {
+		return &body
+	}
+
+	body.Commits = shrink(body.Commits)
 	return &body
+}
+
+func shrink(commits []BitbucketCommit) []BitbucketCommit {
+	if len(commits) <= 2 {
+		return commits
+	}
+
+	c := make([]BitbucketCommit, 2)
+	c[0] = commits[0]
+	c[1] = commits[len(commits)-1]
+	return c
 }
 
 func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
@@ -328,13 +344,15 @@ type WebhookBody struct {
 	} `json:"pusher,omitempty"`
 }
 
+type BitbucketCommit struct {
+	Author  string `json:"author"`
+	Branch  string `json:"branch"`
+	RawNode string `json:"raw_node"`
+}
+
 type BitbucketWebhookBody struct {
-	CanonRul string `json:"canon_url"`
-	Commits  []struct {
-		Author  string `json:"author"`
-		Branch  string `json:"branch"`
-		RawNode string `json:"raw_node"`
-	} `json:"commits"`
+	CanonRul   string            `json:"canon_url"`
+	Commits    []BitbucketCommit `json:"commits"`
 	Repository struct {
 		AbsoluteUrl string `json:"absolute_url"`
 	} `json:"repository"`
