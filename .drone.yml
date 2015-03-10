@@ -1,0 +1,6 @@
+image: tmtk75/hoko
+env:
+  - GOPATH=/var/cache/drone
+script:
+  - go build
+  - go test -cover -v
