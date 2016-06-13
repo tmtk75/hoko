@@ -21,6 +21,24 @@ bb-sample:
 	  "localhost:9981/serf/event/bitbucket?origin=bitbucket&secret=`cat test/secret_token.txt`" \
 	  -d @test/bitbucket-webhook-body
 
+bb-wh-branch:
+	curl -v -XPOST \
+	  -H"X-Request-UUID: 43ac8346-2f1f-450d-9dcb-d2e9c85e04b4" \
+	  -H"X-Hook-UUID: c47c0ee9-b46f-462f-9e80-1f7d8135e199" \
+	  -H"X-Event-Key: repo:push" \
+	  -H"content-type: application/json" \
+	  "localhost:9981/serf/event/bitbucket?origin=bitbucket&secret=`cat test/secret_token.txt`" \
+	  -d @test/webhook-foobar-relaese-0.9.json
+
+bb-wh-tag:
+	curl -v -XPOST \
+	  -H"X-Request-UUID: 43ac8346-2f1f-450d-9dcb-d2e9c85e04b4" \
+	  -H"X-Hook-UUID: c47c0ee9-b46f-462f-9e80-1f7d8135e199" \
+	  -H"X-Event-Key: repo:push" \
+	  -H"content-type: application/json" \
+	  "localhost:9981/serf/event/bitbucket?origin=bitbucket&secret=`cat test/secret_token.txt`" \
+	  -d @test/webhook-foobar-v0.9.0.json
+
 hup:
 	kill -1 `ps axu | egrep 'serf agent' | egrep -v 'egrep serf agent' | awk '{print $$2}'`
 

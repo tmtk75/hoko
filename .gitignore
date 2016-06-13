@@ -9,3 +9,4 @@ roles
 hoko
 pkg
 vendor
+test/*.json

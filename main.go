@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 
@@ -100,7 +99,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.3.1"
+	app.Version = "0.4.0dev"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
@@ -163,7 +162,7 @@ func unmarshalGithub(b []byte, ctx *cli.Context, r render.Render, req *http.Requ
 	return &body
 }
 
-func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
+func unmarshalBitbucket(payload []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
 	if !ctx.Bool("d") {
 		token := os.Getenv(ENV_SECRET_TOKEN)
 		secret := req.URL.Query().Get("secret")
@@ -174,50 +173,57 @@ func unmarshalBitbucket(b []byte, ctx *cli.Context, r render.Render, req *http.R
 		}
 	}
 
-	var payload string
-	if m, err := url.ParseQuery(string(b)); err != nil {
-		log.Printf("ParseQuery failed: %v", string(b))
-		r.Error(400)
-		return nil
-	} else {
-		if len(m["payload"]) == 0 {
-			log.Printf("payload is missing: %v", string(b))
-			r.Error(400)
-			return nil
-		}
-		payload = m["payload"][0]
-	}
-
 	var body BitbucketWebhookBody
-	if err := json.Unmarshal([]byte(payload), &body); err != nil {
+	if err := json.Unmarshal(payload, &body); err != nil {
 		log.Printf("json.Unmarshal failed: %v", payload)
 		r.Error(400)
 		return nil
 	}
 
-	if len(body.Commits) == 0 {
-		log.Printf("commits is empty: %v", body)
+	if _, ok := body.Push["changes"]; !ok {
+		log.Printf("push.changes is missing: %v", body)
+		r.Error(400)
+		return nil
+	}
+	if len(body.Push["changes"]) == 0 {
+		log.Printf("push.changes is empty: %v", body)
 		r.Error(400)
 		return nil
 	}
 
-	if len(body.Commits) <= 2 {
-		return &body
+	var wb WebhookBody
+	ch := body.Push["changes"][0]
+	switch ch.New.Type {
+	case "branch":
+		wb.Ref = "refs/heads/" + ch.New.Name
+	case "tag":
+		wb.Ref = "refs/tags/" + ch.New.Name
+	default:
+		log.Printf("unknown type: %v", ch.New.Type)
+		r.Error(400)
+		return nil
+	}
+	wb.Repository.Name = body.Repository.Name
+	wb.Repository.Owner.Name = body.Repository.Owner.Username
+	wb.Pusher.Name = body.Actor.Username
+	wb.Event = req.Header.Get("X-Event-Key")
+	wb.Created = ch.Created
+	wb.Deleted = ch.Truncated
+	wb.Delivery = "n/a"
+	wb.After = ch.New.Target.Hash
+	wb.Before = ch.Old.Target.Hash
+	log.Printf("X-Request-UUID: %v", req.Header.Get("X-Request-UUID"))
+	log.Printf("X-Hook-UUID: %v", req.Header.Get("X-Hook-UUID"))
+	//log.Printf("%v", body)
+
+	if ctx.Bool("ignore-deleted") && ch.Truncated {
+		log.Printf("ignore truncated")
+		r.Header().Add("content-type", "text/plain")
+		r.Data(200, []byte("ignore truncated\n"))
+		return nil
 	}
 
-	body.Commits = shrink(body.Commits)
-	return &body
-}
-
-func shrink(commits []BitbucketCommit) []BitbucketCommit {
-	if len(commits) <= 2 {
-		return commits
-	}
-
-	c := make([]BitbucketCommit, 2)
-	c[0] = commits[0]
-	c[1] = commits[len(commits)-1]
-	return c
+	return &wb
 }
 
 func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params martini.Params, w http.ResponseWriter) {
@@ -344,17 +350,32 @@ type WebhookBody struct {
 	} `json:"pusher,omitempty"`
 }
 
-type BitbucketCommit struct {
-	Author  string `json:"author"`
-	Branch  string `json:"branch"`
-	RawNode string `json:"raw_node"`
-}
-
+//https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html
 type BitbucketWebhookBody struct {
-	CanonRul   string            `json:"canon_url"`
-	Commits    []BitbucketCommit `json:"commits"`
+	Actor struct {
+		Username string `json:"username"`
+	} `json:"actor"`
 	Repository struct {
-		AbsoluteUrl string `json:"absolute_url"`
+		Name  string `json:"name"`
+		Owner struct {
+			Type     string `json:type`
+			Username string `json:username`
+		} `json:"owner"`
 	} `json:"repository"`
-	User string `json:"user"`
+	Push map[string][]struct { // changes
+		New struct {
+			Name   string `json:"name"`
+			Type   string `json:"type"`
+			Target struct {
+				Hash string `json:"hash"`
+			} `json:"target"`
+		} `json:"new"`
+		Old struct {
+			Target struct {
+				Hash string `json:"hash"`
+			} `json:"target"`
+		} `json:"old"`
+		Created   bool `json:"created"`
+		Truncated bool `json:"truncated"`
+	} `json:"push"`
 }
