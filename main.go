@@ -99,7 +99,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.4.0"
+	app.Version = "0.4.1"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
@@ -209,7 +209,7 @@ func unmarshalBitbucket(payload []byte, ctx *cli.Context, r render.Render, req *
 	wb.Event = req.Header.Get("X-Event-Key")
 	wb.Created = ch.Created
 	wb.Deleted = ch.Truncated
-	wb.Delivery = "n/a"
+	wb.Delivery = req.Header.Get("X-Hook-UUID")
 	wb.After = ch.New.Target.Hash
 	wb.Before = ch.Old.Target.Hash
 	log.Printf("X-Request-UUID: %v", req.Header.Get("X-Request-UUID"))
