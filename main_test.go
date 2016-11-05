@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_buildArgs(t *testing.T) {
+func TestBuildTagOptions(t *testing.T) {
 	a := buildTagOptions(map[string][]string{"foo": {"bar"}})
 	if !(a[0] == "-tag" && a[1] == "foo=bar") {
 		t.Errorf("foo=bar != %v", a[0:2])
