@@ -2,11 +2,7 @@ package main
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,14 +17,15 @@ import (
 	"github.com/martini-contrib/render"
 
 	mcli "github.com/mitchellh/cli"
+
+	"github.com/tmtk75/hoko/encoding"
 )
 
 const (
-	ENV_SECRET_TOKEN = "SECRET_TOKEN"
-	CONFIG_PATH      = "CONFIG_PATH"
-	HOKO_VERSION     = "HOKO_VERSION"
-	HOKO_PATH        = "HOKO_PATH"
-	HOKO_ORIGIN      = "HOKO_ORIGIN"
+	CONFIG_PATH  = "CONFIG_PATH"
+	HOKO_VERSION = "HOKO_VERSION"
+	HOKO_PATH    = "HOKO_PATH"
+	HOKO_ORIGIN  = "HOKO_ORIGIN"
 )
 
 var flags = []cli.Flag{
@@ -112,8 +109,8 @@ func main() {
 
 func Run(ctx *cli.Context) {
 	//log.Printf("SECRET_TOKEN: %v", os.Getenv(ENV_SECRET_TOKEN))
-	if !ctx.Bool("d") && len(os.Getenv(ENV_SECRET_TOKEN)) == 0 {
-		log.Fatalf("length of %v is zero", ENV_SECRET_TOKEN)
+	if !ctx.Bool("d") && len(os.Getenv(encoding.ENV_SECRET_TOKEN)) == 0 {
+		log.Fatalf("length of %v is zero", encoding.ENV_SECRET_TOKEN)
 	}
 	m := martini.Classic()
 	m.Use(render.Renderer())
@@ -132,39 +129,9 @@ type SerfCmd interface {
 	Run(args []string) int
 }
 
-func unmarshalGithub(b []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
-	if !ctx.Bool("d") {
-		sign := req.Header.Get("x-hub-signature")
-		err := verify(sign, b, r, w)
-		if err != nil {
-			return nil
-		}
-	}
-
-	var body WebhookBody
-	if err := json.Unmarshal(b, &body); err != nil {
-		log.Printf("json.Unmarshal failed: %v", string(b))
-		r.Error(400)
-		return nil
-	}
-
-	body.Event = req.Header.Get("x-github-event")
-	body.Delivery = req.Header.Get("x-github-delivery")
-	if ctx.Bool("ignore-deleted") && body.Deleted {
-		log.Printf("ignore deleted")
-		log.Printf("x-github-event: %v", body.Event)
-		log.Printf("x-github-delivery: %v", body.Delivery)
-		r.Header().Add("content-type", "text/plain")
-		r.Data(200, []byte("ignore deleted\n"))
-		return nil
-	}
-
-	return &body
-}
-
 func unmarshalBitbucket(payload []byte, ctx *cli.Context, r render.Render, req *http.Request, w http.ResponseWriter) interface{} {
 	if !ctx.Bool("d") {
-		token := os.Getenv(ENV_SECRET_TOKEN)
+		token := os.Getenv(encoding.ENV_SECRET_TOKEN)
 		secret := req.URL.Query().Get("secret")
 		if token != secret {
 			log.Printf("secret token didn't match")
@@ -191,7 +158,7 @@ func unmarshalBitbucket(payload []byte, ctx *cli.Context, r render.Render, req *
 		return nil
 	}
 
-	var wb WebhookBody
+	var wb encoding.WebhookBody
 	ch := body.Push["changes"][0]
 	switch ch.New.Type {
 	case "branch":
@@ -246,7 +213,7 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 		v = unmarshalBitbucket(b, ctx, r, req, w)
 	} else {
 		os.Setenv(HOKO_ORIGIN, "github")
-		v = unmarshalGithub(b, ctx, r, req, w)
+		v = encoding.UnmarshalGithub(b, ctx, r, req, w)
 	}
 	if v == nil {
 		return
@@ -295,30 +262,6 @@ func ExecSerf(ctx *cli.Context, r render.Render, req *http.Request, params marti
 	r.Data(200, buf.Bytes())
 }
 
-func verify(sign string, b []byte, r render.Render, w http.ResponseWriter) error {
-	log.Printf("x-hub-signature: %v", sign)
-	if len(sign) < 5 {
-		r.Data(400, []byte(fmt.Sprintf("x-hub-signature is too short: %v", sign)))
-		return errors.New("")
-	}
-
-	expected, _ := hex.DecodeString(string(sign[4+1 : len(sign)])) // 4+1 is to skip `sha1=`
-	expected = []byte(expected)
-
-	mac := hmac.New(sha1.New, []byte(os.Getenv(ENV_SECRET_TOKEN)))
-	mac.Write(b)
-	actual := mac.Sum(nil)
-
-	if !hmac.Equal(actual, expected) {
-		log.Printf("%v != %v", actual, expected)
-		w.Header().Set("content-type", "text/plain")
-		r.Data(400, []byte("x-hub-signature not verified"))
-		return errors.New("")
-	}
-
-	return nil
-}
-
 func buildTagOptions(params map[string][]string) []string {
 	a := make([]string, len(params)*2)
 	i := 0
@@ -328,26 +271,6 @@ func buildTagOptions(params map[string][]string) []string {
 		i += 1
 	}
 	return a
-}
-
-type WebhookBody struct {
-	Repository struct {
-		Name  string `json:"name"`
-		Owner struct {
-			Name string `json:"name"`
-		} `json:"owner"`
-	} `json:"repository"`
-	Event    string `json:"event"`
-	Delivery string `json:"delivery"`
-	Ref      string `json:"ref"`
-	After    string `json:"after"`
-	Before   string `json:"before"`
-	Created  bool   `json:"created"`
-	Deleted  bool   `json:"deleted"`
-	//Head_commit map[string]interface{} `json:"head_commit,omitempty"`
-	Pusher struct {
-		Name string `json:"name"`
-	} `json:"pusher,omitempty"`
 }
 
 //https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html
