@@ -43,6 +43,6 @@ workflows:
       - test:
           requires:
             - build
-          filters:
-            branches:
-              only: circleci
+          #filters:
+          #  branches:
+          #    only: circleci
