@@ -20,6 +20,7 @@ jobs:
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
+      - run: pwd
 
       # specify any bash command here prefixed with `run: `
       - run: echo "hello world"
