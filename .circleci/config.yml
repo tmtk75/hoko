@@ -28,4 +28,9 @@ jobs:
       - run: echo "hello world"
       - run: glide update
       - run: make build
+  test:
+    working_directory: /go/src/github.com/tmtk75/hoko
+    docker:
+      - image: circleci/golang:1.8
+    steps:
       - run: go test -v .
