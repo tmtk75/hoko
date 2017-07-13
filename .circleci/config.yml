@@ -20,19 +20,10 @@ jobs:
     working_directory: /go/src/github.com/tmtk75/hoko
     steps:
       - checkout
-      - run: pwd
       - run: go get -v github.com/Masterminds/glide
       - run: go get github.com/mitchellh/gox
-
-      # specify any bash command here prefixed with `run: `
-      - run: echo "hello world"
       - run: glide update
       - run: make build
-  test:
-    working_directory: /go/src/github.com/tmtk75/hoko
-    docker:
-      - image: circleci/golang:1.8
-    steps:
       - run: go test -v .
 
 #workflows:
