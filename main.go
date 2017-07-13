@@ -12,8 +12,8 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
-	"github.com/hashicorp/serf/cmd"
-	"github.com/hashicorp/serf/cmd/agent"
+	"github.com/hashicorp/serf/cmd/serf/command"
+	"github.com/hashicorp/serf/cmd/serf/command/agent"
 	"github.com/martini-contrib/render"
 
 	mcli "github.com/mitchellh/cli"
