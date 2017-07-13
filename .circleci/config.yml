@@ -31,7 +31,14 @@ jobs:
       #    paths:
       #      - vendor
       - run: make build
-      - run: go test -v .
+      - run:
+          name: test
+          command: |
+            mkdir -p test-reports
+            go test -v .
+      - store_artifacts:
+          path: test-reports/
+          destination: tr1
 
 #workflows:
 #  version: 2
