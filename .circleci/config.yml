@@ -26,6 +26,7 @@ jobs:
       - run: go get -v github.com/Masterminds/glide
       - run: go get github.com/mitchellh/gox
       - run: glide update
+      - run: find ~/.glide
       #- save_cache:
       #    key: v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
       #    paths:
