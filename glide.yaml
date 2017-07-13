@@ -4,7 +4,7 @@ import:
 - package: github.com/go-martini/martini
 - package: github.com/hashicorp/serf
   subpackages:
-  - command
-  - command/agent
+  - cmd/serf/command
+  - cmd/serf/command/agent
 - package: github.com/martini-contrib/render
 - package: github.com/mitchellh/cli

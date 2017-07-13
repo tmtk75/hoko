@@ -35,7 +35,7 @@ jobs:
           name: test
           command: |
             mkdir -p test-reports
-            go test -v .
+            go test -v . | tee ./test-reports/reports.txt
       - store_artifacts:
           path: test-reports/
           destination: tr1
