@@ -22,9 +22,10 @@ jobs:
       - checkout
       - run: pwd
       - run: go get -v github.com/Masterminds/glide
+      - run: go get github.com/mitchellh/gox
 
       # specify any bash command here prefixed with `run: `
       - run: echo "hello world"
-      - run: glide
-      #- run: go get -v -d ./...
+      - run: glide update
+      - run: make build
       #- run: go test -v ./...
