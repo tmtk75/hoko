@@ -41,8 +41,8 @@ workflows:
     jobs:
       - build
       - test:
-        requires:
-          - build
-        filters:
-          branches:
-            only: circleci
+          requires:
+            - build
+          filters:
+            branches:
+              only: circleci
