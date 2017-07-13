@@ -28,4 +28,4 @@ jobs:
       - run: echo "hello world"
       - run: glide update
       - run: make build
-      #- run: go test -v ./...
+      - run: go test -v .
