@@ -107,10 +107,15 @@ sg-hoko:
 launch-ec2-instance:
 	open "https://console.aws.amazon.com/ec2/v2/home?region=ap-northeast-1#LaunchInstanceWizard:"
 
+VERSION := $(shell git describe --tags)
 # See to install and setup gox
 # https://github.com/mitchellh/gox
 gox:
-	gox -os="linux darwin" -arch=amd64 -output "pkg/dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	gox -os="linux darwin" -arch=amd64 -output "pkg/dist/{{.Dir}}_{{.OS}}_{{.Arch}}" \
+	  -ldflags "-X main.Version=$(VERSION)"
+
+install: main.go client.go
+	go install -ldflags "-X main.Version=$(VERSION)"
 
 hoko: main.go client.go
 	go build
