@@ -35,6 +35,18 @@ jobs:
       - store_artifacts:
           path: test-reports/
           destination: tr1
+      - store_artifacts:
+          path: pkg
+          destination: nightly-build
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              ghr -u tmtk75 v$(version) pkg/dist/hoko-$(version)_linux_amd64.zip
+            fi
+      #- deploy:
+      #    command: |
+      #      rm pkg/dist/hoko
+      #      ghr -u tmtk75 nightly pkg/dist
 
 #workflows:
 #  version: 2
