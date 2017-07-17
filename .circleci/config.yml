@@ -15,17 +15,17 @@ jobs:
 
     steps:
       - checkout
-      #- restore_cache:
-      #    keys:
-      #      - v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
-      #- run: go get -v github.com/Masterminds/glide
+      - restore_cache:
+          keys:
+            - v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gopkg.lock" }}
       - run: go get github.com/golang/dep/cmd/dep
       - run: go get github.com/mitchellh/gox
+      - run: go get github.com/tcnksm/ghr
       - run: dep ensure
-      #- save_cache:
-      #    key: v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
-      #    paths:
-      #      - vendor
+      - save_cache:
+          key: v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gopkg.lock" }}
+          paths:
+            - vendor
       - run: make build
       - run:
           name: test
@@ -35,6 +35,16 @@ jobs:
       - store_artifacts:
           path: test-reports/
           destination: tr1
+      - store_artifacts:
+          path: pkg
+          destination: nightly-build
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              rm -rf pkg/dist/hoko
+              version=`git describe --tag`-${CIRCLE_BUILD_NUM}
+              ghr -u tmtk75 ${version} pkg/dist
+            fi
 
 #workflows:
 #  version: 2
