@@ -1,5 +1,7 @@
 # hoko
 
+<img src="https://circleci.com/gh/tmtk75/hoko/tree/master.svg?style=shield" />
+
 A HTTP server for github webhook with serf agent, which provides HTTP interface to serf agent for query and event.
 The main purpose is to propagate webhook events to serf cluster. Any hosts can receive webhook events anywhere if the hosts join the serf cluster.
 
