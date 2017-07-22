@@ -42,7 +42,7 @@ jobs:
       - deploy:
           command: |
             if [ "${CIRCLE_BRANCH}" == "circleci-2.0" ]; then
-              version=`git describe---tag`
+              version=`git describe --tag`
               ghr -u tmtk75 v$(version) pkg/dist/hoko-$(version)_linux_amd64.zip
             fi
       #- deploy:
