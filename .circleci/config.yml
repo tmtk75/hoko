@@ -21,6 +21,7 @@ jobs:
       #- run: go get -v github.com/Masterminds/glide
       - run: go get github.com/golang/dep/cmd/dep
       - run: go get github.com/mitchellh/gox
+      - run: go get github.com/tcnksm/ghr
       - run: dep ensure
       #- save_cache:
       #    key: v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
@@ -40,7 +41,8 @@ jobs:
           destination: nightly-build
       - deploy:
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "circleci-2.0" ]; then
+              version=`git describe---tag`
               ghr -u tmtk75 v$(version) pkg/dist/hoko-$(version)_linux_amd64.zip
             fi
       #- deploy:
