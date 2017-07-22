@@ -15,17 +15,17 @@ jobs:
 
     steps:
       - checkout
-      #- restore_cache:
-      #    keys:
-      #      - v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
+      - restore_cache:
+          keys:
+            - v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
       - run: go get github.com/golang/dep/cmd/dep
       - run: go get github.com/mitchellh/gox
       - run: go get github.com/tcnksm/ghr
       - run: dep ensure
-      #- save_cache:
-      #    key: v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
-      #    paths:
-      #      - vendor
+      - save_cache:
+          key: v{{ .Environment.CIRCLE_CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ checksum "glide.yaml" }}
+          paths:
+            - vendor
       - run: make build
       - run:
           name: test
