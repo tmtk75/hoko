@@ -44,7 +44,7 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "circleci-2.0" ]; then
               rm -rf pkg/dist/hoko
               version=`git describe --tag`
-              ghr -u tmtk75 v${version} pkg/dist
+              ghr -u tmtk75 ${version} pkg/dist
             fi
 
 #workflows:
