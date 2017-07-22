@@ -42,13 +42,10 @@ jobs:
       - deploy:
           command: |
             if [ "${CIRCLE_BRANCH}" == "circleci-2.0" ]; then
+              rm -rf pkg/dist/hoko
               version=`git describe --tag`
               ghr -u tmtk75 v${version} pkg/dist
             fi
-      #- deploy:
-      #    command: |
-      #      rm pkg/dist/hoko
-      #      ghr -u tmtk75 nightly pkg/dist
 
 #workflows:
 #  version: 2
