@@ -1,4 +1,6 @@
 #
+.DEFAULT_GOAL := help
+
 run:
 	SECRET_TOKEN=`cat test/secret_token.txt` \
 		go run main.go client.go run --ignore-deleted
@@ -9,7 +11,7 @@ tags:
 secret:
 	@cat test/secret_token.txt
 
-sample:
+gh-sample:
 	curl -v -XPOST \
 	  -H"x-hub-signature: `cat test/x-hub-signature.txt`" \
 	  localhost:9981/serf/query/hoko \
@@ -49,6 +51,7 @@ post:
 
 query:
 	curl -v -XPOST localhost:9981/serf/query/hoko -d '{"ref":"fizbiz"}'
+
 event:
 	curl -v -XPOST localhost:9981/serf/event/webhook -d '{"ref":"foobar"}'
 
@@ -58,54 +61,6 @@ event:
 build: gox zip shasum
 shasum:
 	shasum -a 256 pkg/dist/hoko_linux_amd64.zip
-
-#
-# ansible
-#
-.py:
-	virtualenv .py
-
-# DON'T FORGET source
-# $ source .py/bin/activate
-
-user=ec2-user
-private_key=~/.ssh/id_rsa
-ec2_ipaddr=replace with your host
-
-#user=vagrant
-#private_key=~/.vagrant.d/insecure_private_key
-#ec2_ipaddr=192.168.111.222
-
-ping: .py/bin/ansible
-	ansible -u $(user) -m ping -i provision/hosts --private-key $(private_key) $(ec2_ipaddr)
-
-playbook:
-	ansible-playbook -u $(user) -i provision/hosts --private-key $(private_key) provision/playbook.yaml
-
-jq:
-	brew install jq
-
-#
-# secrity groups
-#
-vpcs:
-	aws ec2 describe-vpcs
-
-vpc-id:
-	@aws ec2 describe-vpcs | jq -r ".Vpcs[0].VpcId"
-
-sg-hoko:
-	aws ec2 create-security-group --vpc-id $(vpc_id) --group-name "hoko" --description "hoko" > .sg-hoko.json
-	aws ec2 create-tags --resources `jq -r .GroupId < .sg-hoko.json` --tags Key=role,Value=hoko
-	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 22   --protocol tcp --cidr 0.0.0.0/0
-	aws ec2 authorize-security-group-ingress --group-id `jq -r .GroupId < .sg-hoko.json` --port 9981 --protocol tcp --cidr 0.0.0.0/0
-
-#
-# Launch a t2.micro instance on AWS console, which can be only launched on a VPC.
-# It's troublesome if you launch it with awscli :D
-#
-launch-ec2-instance:
-	open "https://console.aws.amazon.com/ec2/v2/home?region=ap-northeast-1#LaunchInstanceWizard:"
 
 VERSION := $(shell git describe --tags)
 # See to install and setup gox
@@ -136,23 +91,11 @@ pkg/dist/hoko_darwin_amd64.zip: pkg/dist/hoko_darwin_amd64
 
 clean:
 	rm -f ssh-config
+
 distclean: clean
 	rm -rf hoko pkg
 
-##
-ssh-config:
-	vagrant ssh-config > ssh-config
-
-galaxy:
-	ansible-galaxy install -p roles tmtk75.hoko
-
-vagrant-deploy: ssh-config
-	ansible-playbook -i "default," playbook.yaml
-
-##
-ansible: .e/bin/ansible
-.e/bin/ansible: .e
-	.e/bin/pip2.7 install ansible
-.e:
-	virtualenv .e
-
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'
