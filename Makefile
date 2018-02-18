@@ -58,16 +58,16 @@ event:
 #
 #
 #
-build: gox zip shasum
+VERSION := $(shell git describe --tags)
+build:
+	for os in linux darwin; do \
+	  GOOS=$$os GOARCH=amd64 go build \
+	    -o pkg/hoko_$${os}_amd64 \
+	    -ldflags "-X main.Version=$(VERSION)"; \
+	done
+
 shasum:
 	shasum -a 256 pkg/dist/hoko_linux_amd64.zip
-
-VERSION := $(shell git describe --tags)
-# See to install and setup gox
-# https://github.com/mitchellh/gox
-gox:
-	gox -os="linux darwin" -arch=amd64 -output "pkg/dist/{{.Dir}}_{{.OS}}_{{.Arch}}" \
-	  -ldflags "-X main.Version=$(VERSION)"
 
 install: main.go client.go
 	go install -ldflags "-X main.Version=$(VERSION)"
@@ -75,11 +75,9 @@ install: main.go client.go
 hoko: main.go client.go
 	go build
 
-version=`./hoko -v | sed 's/hoko version //g'`
-
 release: hoko
-	cp -f pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko-$(version)_linux_amd64.zip 
-	ghr -u tmtk75 v$(version) pkg/dist/hoko-$(version)_linux_amd64.zip
+	cp -f pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko-$(VERSION)_linux_amd64.zip 
+	ghr -u tmtk75 v$(VERSION) pkg/dist/hoko-$(VERSION)_linux_amd64.zip
 
 zip: pkg/dist/hoko_linux_amd64.zip pkg/dist/hoko_darwin_amd64.zip
 
