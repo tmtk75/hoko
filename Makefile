@@ -88,10 +88,10 @@ pkg/dist/hoko_darwin_amd64.zip: pkg/dist/hoko_darwin_amd64
 	cd pkg/dist; mv hoko_darwin_amd64 hoko; zip hoko_darwin_amd64.zip hoko
 
 clean:
-	rm -f ssh-config
+	rm -f hoko
 
 distclean: clean
-	rm -rf hoko pkg
+	rm -rf pkg
 
 .PHONY: help
 help:
