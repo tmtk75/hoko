@@ -64,13 +64,6 @@ func UnmarshalBitbucket(payload []byte, ctx *cli.Context, r render.Render, req *
 	log.Printf("X-Hook-UUID: %v", req.Header.Get("X-Hook-UUID"))
 	//log.Printf("%v", body)
 
-	if ctx.Bool("ignore-deleted") && ch.Truncated {
-		log.Printf("ignore truncated")
-		r.Header().Add("content-type", "text/plain")
-		r.Data(200, []byte("ignore truncated\n"))
-		return nil
-	}
-
 	return &wb
 }
 
