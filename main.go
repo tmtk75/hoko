@@ -100,7 +100,7 @@ var commands = []cli.Command{
 func main() {
 	app := cli.NewApp()
 	app.Name = "hoko"
-	app.Version = "0.4.1"
+	app.Version = "0.4.3"
 	app.Usage = "A http server for github webhook with serf agent"
 	app.Commands = commands
 
