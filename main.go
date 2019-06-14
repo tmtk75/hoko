@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
@@ -223,6 +224,11 @@ func unmarshalBitbucket(payload []byte, ctx *cli.Context, r render.Render, req *
 		return nil
 	}
 
+	if wb.Pusher.Name == "" {
+		re := regexp.MustCompile("[^a-zA-Z0-9]+")
+		wb.Pusher.Name = string(re.ReplaceAll([]byte(body.Actor.Nickname), []byte("_")))
+	}
+
 	return &wb
 }
 
@@ -354,6 +360,7 @@ type WebhookBody struct {
 type BitbucketWebhookBody struct {
 	Actor struct {
 		Username string `json:"username"`
+		Nickname string `json:"nickname"`
 	} `json:"actor"`
 	Repository struct {
 		Name  string `json:"name"`
